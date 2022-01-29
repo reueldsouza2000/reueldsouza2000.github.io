@@ -15,7 +15,7 @@ One way of going about the TSP is using genetic algorithms. The idea here is enc
 - Assign higher fitness scores to paths that minimize distance.
 - Create a mating pool in which paths that scored higher are better represented.
 - Create a child population from the mating pool using a gene cross-over function.
-- Mutate a small section of the child population to account for the disparity between the population size and the sample space of thr TSP. ( Helps avoid local minima due to lack of enough initial genetic diversity in the population)
+- Mutate a small section of the child population to account for the disparity between the population size and the sample space of the TSP. ( Helps avoid local minima due to lack of enough initial genetic diversity in the population)
 - Using the child population as the current population repeat the process.
 
 

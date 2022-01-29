@@ -1,6 +1,6 @@
 let population, phenotype;
 let populationSize = 1000, geneLength;
-let mutationRate = 0.01;
+let mutationRate = 0.10;
 
 Math.seedrandom('abcde'); // using the library seedrandom.js.
 

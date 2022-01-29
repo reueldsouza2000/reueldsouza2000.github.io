@@ -5,7 +5,7 @@ let mutationRate = 0.10;
 Math.seedrandom('abcde'); // using the library seedrandom.js.
 
 function setup() {
-  createCanvas(400, 400);
+  createCanvas(800, 800);
   phenotype = new Phenotype()
   geneLength = phenotype.coordinates.length;
   population = new Population(populationSize, geneLength);
@@ -13,7 +13,7 @@ function setup() {
 }
 
 function draw() {
-  background(255);
+  background(200);
 
   population.calcFitness();
   population.createMatingPool();
@@ -21,7 +21,9 @@ function draw() {
   population.mutation(mutationRate);
 
   population.displayDetails();
-  phenotype.display(population.globalbestgenes, population.generations, 1/population.globalbestfitness);
+  phenotype.display(population.globalbestgenes, 
+                    population.generations,
+                    population.globalbestdistance);
 
   // if(population.generations == 3000){
   //   print(" ");

@@ -13,8 +13,9 @@ class Population{
         this.generations = 0;
 
         this.bestobject = new DNA(DNAlength);
+
+        this.globalbestdistance = 0;
         this.globalbestfitness = 0;
-        
         this.globalbestgenes = [];
         for (let i = 0; i < this.DNAlength;i++){
             this.globalbestgenes.push(i); // initial
@@ -57,8 +58,7 @@ class Population{
                 this.matingPool.push(this.populationList[i]);
             }
 
-        }
-    
+        }    
     }
 
     reproduce(){
@@ -110,20 +110,18 @@ class Population{
 
             this.globalbestfitness = this.bestobject.fitness;
             this.globalbestgenes = this.bestobject.genes;
-  
+            this.globalbestdistance = this.bestobject.distance;
+
             print(" ");
             print('Generation #',this.generations);
             print('Avg fitness = ',this.averageFitness());
             print('Global best fitness = ',this.bestobject.fitness);
-            print('Total distance = ', 1/this.bestobject.fitness);
+            print('Total distance = ', this.bestobject.distance);
             print('Global best genes = ',this.bestobject.genes);
             
             
         } 
 
-        
-        
-        
     }
 
 }

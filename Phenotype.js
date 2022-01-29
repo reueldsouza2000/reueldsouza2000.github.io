@@ -4,7 +4,7 @@ class Phenotype{
         this.coordinates = [ ];
         let cities = 10; 
         for (let i = 0 ; i < cities; i++){
-            this.coordinates.push(createVector(Math.random(), Math.random()).mult(width));
+            this.coordinates.push(createVector(Math.random(), Math.random()).mult(400));
         }
     }
 

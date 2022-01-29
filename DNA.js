@@ -2,6 +2,7 @@ class DNA{
     constructor(geneLength){ // length of gene array.
 
         this.fitness = 0;
+        this.distance = 0;
         this.DNAlength = geneLength;
         this.genes = [];
 
@@ -26,7 +27,8 @@ class DNA{
         d += coords[this.genes[i]].dist(coords[this.genes[i + 1]]);
       }
 
-      this.fitness = 1/d;
+      this.distance = d;
+      this.fitness = 1/d**0.5;
     }  
 
     // Crossover
@@ -34,7 +36,6 @@ class DNA{
       // A new child
 
       let childgenes = [] ;
-
 
       // arbitrary part from one, rest from the other in order.
 
@@ -85,10 +86,12 @@ class DNA{
             let temp = this.genes[index1];
             this.genes[index1] = this.genes[index2];
             this.genes[index2] = temp;
+
         }
          
       }
       this.calcFitness();
+
   }
 
 }

@@ -25,9 +25,4 @@ function draw() {
                     population.generations,
                     population.globalbestdistance);
 
-  // if(population.generations == 3000){
-  //   print(" ");
-  //   print("3000 generations complete");
-  //   noLoop();
-  // }
 }

@@ -2,7 +2,7 @@ let population, phenotype;
 let populationSize = 1000, geneLength;
 let mutationRate = 0.10;
 
-//Math.seedrandom('abcde'); // using the library seedrandom.js.
+Math.seedrandom('abcde'); // using the library seedrandom.js.
 
 function setup() {
   createCanvas(800, 800);

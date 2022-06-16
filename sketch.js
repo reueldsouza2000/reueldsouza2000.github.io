@@ -7,7 +7,7 @@ let neighbourCoordinates = [];
 
 
 function setup() {
-	createCanvas(1920, 955);
+	createCanvas(1820, 855);
 
 	numberCols = floor(gridwidth/scl);
 	numberRows = floor(gridheight/scl);

@@ -1,0 +1,965 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PdCrO₂ Crystal Structure</title>
+<meta name="description" content="Interactive 3D viewer of the delafossite PdCrO2 (R-3m) in its non-magnetic state.">
+<meta name="theme-color" content="#ffffff">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3CradialGradient id='g' cx='.5' cy='.5' r='.5' fx='.35' fy='.3'%3E%3Cstop offset='0' stop-color='%23ecd6ff'/%3E%3Cstop offset='.18' stop-color='%23b26ee8'/%3E%3Cstop offset='.65' stop-color='%236a249e'/%3E%3Cstop offset='1' stop-color='%232c0a4d'/%3E%3C/radialGradient%3E%3Ccircle cx='32' cy='32' r='30' fill='url(%23g)'/%3E%3Cellipse cx='22' cy='19' rx='10' ry='6.5' fill='%23fff' fill-opacity='.6' transform='rotate(-35 22 19)'/%3E%3C/svg%3E">
+<!-- link previews (Slack, Teams, email) when the hosted page is shared -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="PdCrO₂ Crystal Structure">
+<meta property="og:description" content="Interactive 3D viewer of the delafossite PdCrO₂ (R3̄m) in its non-magnetic state.">
+<meta property="og:url" content="https://reueldsouza2000.github.io/pdcro2/">
+<meta property="og:image" content="https://reueldsouza2000.github.io/pdcro2/preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  /* Computer Modern, as in the LaTeX-rendered figure labels: use a local CMU / Latin Modern
+     install if present, otherwise the KaTeX build of CM; offline it falls back to Georgia. */
+  @font-face { font-family: "CM Serif"; font-style: normal; font-weight: 400; font-display: swap;
+    src: local("CMU Serif Roman"), local("CMUSerif-Roman"), local("LM Roman 10 Regular"), local("LMRoman10-Regular"),
+         url("https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Main-Regular.woff2") format("woff2"); }
+  @font-face { font-family: "CM Serif"; font-style: italic; font-weight: 400; font-display: swap;
+    src: local("CMU Serif Italic"), local("CMUSerif-Italic"), local("LM Roman 10 Italic"), local("LMRoman10-Italic"),
+         url("https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Main-Italic.woff2") format("woff2"); }
+  @font-face { font-family: "CM Serif"; font-style: normal; font-weight: 700; font-display: swap;
+    src: local("CMU Serif Bold"), local("CMUSerif-Bold"), local("LM Roman 10 Bold"), local("LMRoman10-Bold"),
+         url("https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Main-Bold.woff2") format("woff2"); }
+
+  :root {
+    --ink: #1a1a1a;
+    --ink-2: #444;
+    --muted: #767676;
+    --faint: #a5a5a5;
+    --line: #e7e7e7;
+    --line-2: #d5d5d5;
+    --wash: #f6f7f9;
+    --accent: #1f5bc4;
+    --accent-wash: #eaf1fb;
+    --serif: "CM Serif", "CMU Serif", "Latin Modern Roman", Georgia, "Times New Roman", serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #fff; color: var(--ink); font-family: var(--serif); }
+  body { -webkit-font-smoothing: antialiased; }
+  sub { font-size: .72em; line-height: 0; }
+  .ov { text-decoration: overline; text-decoration-thickness: .06em; }
+
+  .app { display: grid; grid-template-columns: minmax(0, 1fr) 300px; height: 100vh; height: 100dvh; }
+
+  /* ---- 3D stage ---- */
+  .stage { position: relative; overflow: hidden; min-height: 0; background: #fff; }
+  #view { display: block; width: 100%; height: 100%; cursor: grab; touch-action: none; outline: none; }
+  #view.dragging { cursor: grabbing; }
+  #view.panning { cursor: move; }
+  .hint { position: absolute; right: 18px; bottom: 14px; font-size: 13.5px; color: var(--faint);
+          pointer-events: none; user-select: none; text-align: right; }
+  .tip { position: absolute; left: 0; top: 0; pointer-events: none; opacity: 0; transition: opacity .12s;
+         background: rgba(255,255,255,.97); border: 1px solid var(--line); border-radius: 9px;
+         box-shadow: 0 8px 24px rgba(30,30,60,.09); padding: 9px 12px 10px; font-size: 14px; line-height: 1.5;
+         white-space: nowrap; z-index: 2; }
+  .tip.on { opacity: 1; }
+  .tip-h { display: flex; align-items: center; gap: 7px; font-size: 16px; margin-bottom: 2px; }
+  .tip-h span { color: var(--muted); font-size: 14px; }
+  .tip-f { color: var(--ink-2); }
+  .tip-n { color: var(--muted); font-size: 13.5px; }
+
+  /* ---- control panel ---- */
+  .panel { border-left: 1px solid var(--line); overflow-y: auto; padding: 24px 22px 20px;
+           display: flex; flex-direction: column; gap: 19px; background: #fff; }
+  .title h1 { font-weight: 400; font-size: 31px; line-height: 1.05; margin: 0; }
+  .title p { margin: 7px 0 0; color: var(--muted); font-size: 15px; line-height: 1.35; }
+  section h2 { margin: 0 0 9px; font-size: 11.5px; font-weight: 400; letter-spacing: .15em;
+               text-transform: uppercase; color: var(--muted); }
+  .head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; }
+  .head h2 { margin: 0; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 7px; transition: opacity .15s; }
+  .chips.atoms { display: grid; grid-template-columns: repeat(3, 1fr); }
+  .chips.off { opacity: .4; pointer-events: none; }
+  .chip { appearance: none; -webkit-appearance: none; font: inherit; color: var(--ink); background: #fff;
+          border: 1px solid var(--line-2); border-radius: 999px; display: inline-flex; align-items: center;
+          justify-content: center; gap: 7px; padding: 6px 12px 6px 7px; font-size: 16.5px; line-height: 1;
+          cursor: pointer; transition: border-color .15s, background-color .15s, color .15s; }
+  .chip.bond { font-size: 14.5px; padding: 6px 11px 6px 8px; gap: 6px; }
+  .chip:hover { border-color: #b3b3b3; }
+  .chip svg { flex: none; transition: opacity .15s, filter .15s; }
+  .chip[aria-pressed="false"] { color: var(--faint); background: var(--wash); border-color: var(--line); }
+  .chip[aria-pressed="false"] svg { opacity: .3; filter: grayscale(1); }
+
+  .opt { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+         padding: 6px 0; font-size: 15.5px; cursor: pointer; }
+  .switch { appearance: none; -webkit-appearance: none; margin: 0; flex: none; width: 34px; height: 20px;
+            border-radius: 999px; background: #d3d3d3; position: relative; cursor: pointer; transition: background .18s; }
+  .switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%;
+                   background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.3); transition: transform .18s; }
+  .switch:checked { background: var(--accent); }
+  .switch:checked::after { transform: translateX(14px); }
+
+  .range { display: grid; grid-template-columns: auto 1fr 3.4em; align-items: center; gap: 12px;
+           padding: 7px 0 2px; font-size: 15.5px; }
+  .range output { font-size: 13.5px; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+  input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 22px; margin: 0; background: transparent; cursor: pointer; }
+  input[type=range]::-webkit-slider-runnable-track { height: 3px; border-radius: 3px; background: var(--line-2); }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; margin-top: -6.5px; border-radius: 50%;
+                                            background: #fff; border: 1.5px solid var(--accent); box-shadow: 0 1px 2px rgba(0,0,0,.15); }
+  input[type=range]::-moz-range-track { height: 3px; border-radius: 3px; background: var(--line-2); }
+  input[type=range]::-moz-range-thumb { width: 13px; height: 13px; border-radius: 50%; background: #fff; border: 1.5px solid var(--accent); }
+
+  .cellrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 0; font-size: 15.5px; }
+  .stepper { display: inline-flex; align-items: center; border: 1px solid var(--line-2); border-radius: 999px; overflow: hidden; flex: none; }
+  .stepper button { appearance: none; border: 0; background: #fff; font: inherit; font-size: 18px; line-height: 1; color: var(--ink-2);
+                    width: 30px; height: 28px; cursor: pointer; }
+  .stepper button:hover:not(:disabled) { background: var(--wash); }
+  .stepper button:disabled { color: #d0d0d0; cursor: default; }
+  .stepper output { min-width: 24px; text-align: center; font-size: 15.5px; font-variant-numeric: tabular-nums; }
+
+  .btns { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .btns.two { grid-template-columns: repeat(2, 1fr); }
+  .btn { appearance: none; font: inherit; font-size: 14.5px; color: var(--ink); background: #fff; border: 1px solid var(--line-2);
+         border-radius: 8px; padding: 7px 0 6px; cursor: pointer; transition: border-color .15s, background-color .15s, color .15s; }
+  .btn:hover { border-color: #b3b3b3; background: var(--wash); }
+  .btn.active { border-color: #9db6e2; background: var(--accent-wash); color: #17428f; }
+  .readout { margin-top: 8px; font-size: 13.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  .chip:focus-visible, .btn:focus-visible, .stepper button:focus-visible, .switch:focus-visible, input[type=range]:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .meta { margin-top: auto; border-top: 1px solid var(--line); padding-top: 13px; font-size: 13px; line-height: 1.5; color: var(--muted); }
+  .meta p { margin: 0 0 6px; }
+  .meta p:last-child { margin: 0; }
+
+  @media (max-width: 760px) {
+    .app { grid-template-columns: 1fr; grid-template-rows: 64vh auto; height: auto; }
+    .panel { border-left: 0; border-top: 1px solid var(--line); padding: 20px 16px 24px; overflow: visible; }
+    .hint { display: none; }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs id="uiDefs"></defs></svg>
+
+<div class="app">
+  <main class="stage" id="stage">
+    <canvas id="view" tabindex="0" aria-label="Interactive 3D crystal structure of PdCrO2. Drag to rotate, scroll to zoom, arrow keys to rotate."></canvas>
+    <div class="tip" id="tip" role="status" aria-live="polite"></div>
+    <div class="hint">Drag to rotate · Shift-drag to pan · Scroll to zoom · Double-click to reset</div>
+  </main>
+
+  <aside class="panel" aria-label="Display controls">
+    <header class="title">
+      <h1>PdCrO<sub>2</sub></h1>
+      <p>Delafossite, <i>R</i><span class="ov">3</span><i>m</i> — non-magnetic state</p>
+    </header>
+
+    <section>
+      <h2>Atoms</h2>
+      <div class="chips atoms">
+        <button class="chip" type="button" data-el="Pd" aria-pressed="true" title="Show / hide palladium">Pd</button>
+        <button class="chip" type="button" data-el="Cr" aria-pressed="true" title="Show / hide chromium">Cr</button>
+        <button class="chip" type="button" data-el="O"  aria-pressed="true" title="Show / hide oxygen">O</button>
+      </div>
+    </section>
+
+    <section>
+      <div class="head"><h2>Bonds</h2><input type="checkbox" class="switch" id="bonds" checked aria-label="Show bonds"></div>
+      <div class="chips" id="bondChips">
+        <button class="chip bond" type="button" data-bond="Pd-O"  aria-pressed="true">Pd–O</button>
+        <button class="chip bond" type="button" data-bond="Cr-O"  aria-pressed="true">Cr–O</button>
+        <button class="chip bond" type="button" data-bond="Pd-Pd" aria-pressed="false" title="In-plane Pd–Pd (metallic Pd sheet)">Pd–Pd</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Display</h2>
+      <label class="opt"><span>CrO<sub>6</sub> octahedra</span><input type="checkbox" class="switch" id="octa"></label>
+      <label class="opt"><span>Unit cell</span><input type="checkbox" class="switch" id="cell" checked></label>
+      <label class="opt"><span>Depth cue</span><input type="checkbox" class="switch" id="fog" checked></label>
+      <label class="range"><span>Atom size</span><input type="range" id="size" min="0.5" max="2" step="0.05" value="1"><output id="sizeOut">1.00×</output></label>
+    </section>
+
+    <section>
+      <h2>Supercell</h2>
+      <div class="cellrow"><span>In-plane, <i>a</i> × <i>b</i></span>
+        <div class="stepper" data-key="n" data-min="1" data-max="6">
+          <button type="button" data-d="-1" aria-label="Fewer in-plane cells">−</button><output>3</output><button type="button" data-d="1" aria-label="More in-plane cells">+</button>
+        </div>
+      </div>
+      <div class="cellrow" title="One layer = one Pd sheet + one CrO2 sheet (c/3). Three layers make one unit cell.">
+        <span>Layers along <i>c</i></span>
+        <div class="stepper" data-key="k" data-min="1" data-max="6">
+          <button type="button" data-d="-1" aria-label="Fewer layers">−</button><output>3</output><button type="button" data-d="1" aria-label="More layers">+</button>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>View along</h2>
+      <div class="btns">
+        <button class="btn" type="button" data-view="001" title="Top view, down the c axis">[001]</button>
+        <button class="btn" type="button" data-view="100" title="Side view along a">[100]</button>
+        <button class="btn" type="button" data-view="120" title="Side view perpendicular to a">[120]</button>
+        <button class="btn" type="button" data-view="reset" title="Default view (double-click the structure)">Reset</button>
+      </div>
+      <div class="readout" id="readout"></div>
+    </section>
+
+    <section>
+      <h2>Export current view</h2>
+      <div class="btns two">
+        <button class="btn" type="button" id="exSvg" title="Vector file in the style of your figures">SVG</button>
+        <button class="btn" type="button" id="exPng" title="3× resolution bitmap">PNG</button>
+      </div>
+    </section>
+
+    <footer class="meta" id="meta"></footer>
+  </aside>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  /* ==================================================================
+     Crystal structure: PdCrO2, delafossite, R-3m (No. 166), hexagonal setting.
+     Takatsu et al., Phys. Rev. B 89, 104408 (2014), Table I — X-ray, 300 K
+     (paramagnetic, T > T_N = 37.5 K).
+     ================================================================== */
+  const LAT = { a: 2.9228, c: 18.093, z: 0.1105 };
+  const SQ3 = Math.sqrt(3), D2R = Math.PI / 180;
+  const CENTRING = [[0, 0, 0], [2 / 3, 1 / 3, 1 / 3], [1 / 3, 2 / 3, 2 / 3]];
+  const BASIS = [
+    { el: 'Pd', site: '3a', f: [0, 0, 0] },
+    { el: 'Cr', site: '3b', f: [0, 0, 0.5] },
+    { el: 'O',  site: '6c', f: [0, 0,  LAT.z] },
+    { el: 'O',  site: '6c', f: [0, 0, -LAT.z] },
+  ];
+
+  function sub(a, b) { return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
+  function add(a, b) { return [a[0] + b[0], a[1] + b[1], a[2] + b[2]]; }
+  function scl(a, s) { return [a[0] * s, a[1] * s, a[2] * s]; }
+  function dot(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
+  function cross(a, b) { return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]; }
+  function len(a) { return Math.hypot(a[0], a[1], a[2]); }
+  function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
+  function cart(f) { return [LAT.a * (f[0] - 0.5 * f[1]), LAT.a * (SQ3 / 2) * f[1], LAT.c * f[2]]; }
+  function hexRGB(h) { return [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)); }
+  function toWhite(rgb, f) { return rgb.map(v => Math.round(v + (255 - v) * f)); }
+  function css(rgb, a) { return a === undefined || a >= 1 ? `rgb(${rgb})` : `rgba(${rgb},${+a.toFixed(3)})`; }
+  function hex(rgb) { return '#' + rgb.map(v => v.toString(16).padStart(2, '0')).join(''); }
+
+  const DIST = {
+    PdO: LAT.z * LAT.c,
+    CrO: Math.hypot(LAT.a / SQ3, (1 / 6 - LAT.z) * LAT.c),
+    MM: LAT.a,
+  };
+  const ANG = (() => {           // cis O–Cr–O angles (trigonally distorted octahedron)
+    const h = -(1 / 6 - LAT.z) * LAT.c, q = LAT.a / SQ3;
+    const A = [q, 0, h], B = [q * Math.cos(2 * Math.PI / 3), q * Math.sin(2 * Math.PI / 3), h];
+    const intra = Math.acos(dot(A, B) / (len(A) * len(B))) / D2R;
+    return { intra, inter: 180 - intra };
+  })();
+
+  /* ==================================================================
+     Style — sphere shading copied from the reference figures
+     (radial body gradient, rim light, gloss + spark ellipses at −35°).
+     ================================================================== */
+  const EL = {
+    Pd: { name: 'palladium', r: 0.50, stops: ['#ffffff', '#dfe2e7', '#8b929b', '#2d3238'], rim: '#eef2f6' },
+    Cr: { name: 'chromium',  r: 0.44, stops: ['#ecd6ff', '#b26ee8', '#6a249e', '#2c0a4d'], rim: '#e2b8ff' },
+    O:  { name: 'oxygen',    r: 0.32, stops: ['#ffe1dc', '#ee5747', '#a8161b', '#450507'], rim: '#ffb3a9' },
+  };
+  const STOP_AT = [0, 0.18, 0.65, 1];
+  const GLOSS = [[0, 1], [0.35, 0.85], [0.75, 0.25], [1, 0]];
+  const SPARK = [[0, 1], [0.6, 0.9], [1, 0]];
+  const BOND_R = 0.085;                                   // Å
+  const BOND_STOPS = [[0, '#a5a5a5'], [0.28, '#f3f3f3'], [0.62, '#bcbcbc'], [1, '#6b6b6b']].map(([o, c]) => [o, hexRGB(c)]);
+  const OCTA_FILL = hexRGB('#b26ee8'), OCTA_EDGE = hexRGB('#6a249e'), OCTA_FA = 0.2, OCTA_EA = 0.42;
+  const CELL_RGB = hexRGB('#3a3a3a');
+  const FOG_MAX = 0.38, FOG_LEVELS = 16;
+  const LIGHT = [-0.6, -0.8];                             // screen-space light direction (upper left)
+  const SERIF = '"CM Serif", "CMU Serif", "Latin Modern Roman", Georgia, "Times New Roman", serif';
+  const VIEWS = {
+    reset: { phi: 20 * D2R, theta: 16 * D2R },
+    '001': { phi: 0, theta: 90 * D2R },
+    '100': { phi: 90 * D2R, theta: 0 },
+    '120': { phi: 0, theta: 0 },
+  };
+
+  const S = {
+    show: { Pd: true, Cr: true, O: true },
+    bonds: true, bondType: { 'Pd-O': true, 'Cr-O': true, 'Pd-Pd': false },
+    octa: false, cell: true, fog: true, size: 1,
+    n: 3, k: 3,
+    phi: VIEWS.reset.phi, theta: VIEWS.reset.theta,
+    scale: 30, panX: 0, panY: 0,
+  };
+
+  /* ==================================================================
+     Model: Pd and Cr inside the n × n × (k/3) box; O wherever it belongs
+     to the CrO6 octahedron of one of those Cr (so every octahedron is
+     complete and no O–Pd dumbbell dangles off a corner); bonds by distance.
+     ================================================================== */
+  function buildModel(n, k) {
+    const zTop = k / 3, eps = 1e-6;
+    const atoms = [], index = new Map(), candO = [];
+    const inBox = f => f[0] > -eps && f[0] < n + eps && f[1] > -eps && f[1] < n + eps && f[2] > -eps && f[2] < zTop + eps;
+    const addAtom = (b, f) => {
+      const key = b.el + f.map(v => Math.round(v * 1e5)).join(',');
+      if (index.has(key)) return;
+      const at = { id: atoms.length, el: b.el, site: b.site, f, p: cart(f), v: null };
+      atoms.push(at); index.set(key, at);
+    };
+    for (let i = -1; i <= n; i++) for (let j = -1; j <= n; j++) for (let l = -1; l <= Math.ceil(zTop); l++)
+      for (const t of CENTRING) for (const b of BASIS) {
+        const f = [i + t[0] + b.f[0], j + t[1] + b.f[1], l + t[2] + b.f[2]];
+        if (b.el === 'O') candO.push([b, f]);
+        else if (inBox(f)) addAtom(b, f);
+      }
+    const crs = atoms.filter(a => a.el === 'Cr');
+    for (const [b, f] of candO) {
+      const p = cart(f);
+      if (crs.some(c => Math.abs(c.p[2] - p[2]) < 1.5 && len(sub(p, c.p)) < DIST.CrO + 0.1)) addAtom(b, f);
+    }
+
+    const bonds = [], nb = new Map(atoms.map(a => [a, []]));
+    for (let i = 0; i < atoms.length; i++) for (let j = i + 1; j < atoms.length; j++) {
+      let A = atoms[i], B = atoms[j];
+      const dz = Math.abs(A.p[2] - B.p[2]);
+      if (dz > 2.4) continue;
+      const d = len(sub(A.p, B.p)), pair = [A.el, B.el].sort().join('');
+      let type = null;
+      if (pair === 'OPd' && d < DIST.PdO + 0.15) type = 'Pd-O';
+      else if (pair === 'CrO' && d < DIST.CrO + 0.15) type = 'Cr-O';
+      else if (pair === 'PdPd' && dz < 0.01 && Math.abs(d - DIST.MM) < 0.05) type = 'Pd-Pd';
+      if (!type) continue;
+      if (A.el === 'O') [A, B] = [B, A];                  // cation first
+      const bond = { type, A, B, d };
+      bonds.push(bond); nb.get(A).push(bond); nb.get(B).push(bond);
+    }
+
+    const octa = [];
+    for (const c of crs) {
+      const os = nb.get(c).filter(b => b.type === 'Cr-O').map(b => b.B);
+      if (os.length !== 6) continue;
+      const pairs = [], used = new Set();
+      for (const o of os) {
+        if (used.has(o)) continue;
+        const anti = os.find(q => q !== o && !used.has(q) && len(sub(add(o.p, q.p), scl(c.p, 2))) < 0.02);
+        if (!anti) break;
+        used.add(o); used.add(anti); pairs.push([o, anti]);
+      }
+      if (pairs.length !== 3) continue;
+      const faces = [];
+      for (const a of pairs[0]) for (const b of pairs[1]) for (const d of pairs[2]) faces.push([a, b, d]);
+      octa.push({ c, faces });
+    }
+
+    const corners = [];
+    for (const z of [0, 1]) for (const y of [0, 1]) for (const x of [0, 1]) corners.push(cart([x, y, z]));
+    const cellEdges = [];
+    for (let i = 0; i < 8; i++) for (let b = 0; b < 3; b++) { const j = i ^ (1 << b); if (j > i) cellEdges.push([corners[i], corners[j]]); }
+
+    return { atoms, bonds, octa, corners, cellEdges, center: cart([n / 2, n / 2, zTop / 2]) };
+  }
+
+  /* ==================================================================
+     Projection (orthographic orbit camera: azimuth φ about c, elevation θ)
+     view X → right, Y → up, Z → towards the viewer.
+     ================================================================== */
+  function rotator(phi, theta) {
+    const cp = Math.cos(phi), sp = Math.sin(phi), ct = Math.cos(theta), st = Math.sin(theta);
+    return v => {
+      const xr = v[0] * cp - v[1] * sp, yr = v[0] * sp + v[1] * cp;
+      return [xr, v[2] * ct + yr * st, v[2] * st - yr * ct];
+    };
+  }
+  const byZ = (a, b) => a.z - b.z;
+  const radius = el => EL[el].r * S.size;
+
+  function buildScene(W, H) {
+    const R = rotator(S.phi, S.theta), C = M.center, s = S.scale;
+    const ox = W / 2 + S.panX * s, oy = H / 2 - S.panY * s;
+    const SX = X => ox + X * s, SY = Y => oy - Y * s;
+    const V = p => R(sub(p, C));
+
+    let zmin = Infinity, zmax = -Infinity;
+    for (const at of M.atoms) { at.v = V(at.p); zmin = Math.min(zmin, at.v[2]); zmax = Math.max(zmax, at.v[2]); }
+    const span = Math.max(zmax - zmin, 1e-6);
+    const fogOf = z => S.fog ? FOG_MAX * clamp((zmax - z) / span, 0, 1) : 0;
+
+    const prims = [], groups = new Map();
+
+    // CrO6 octahedra: one depth-sorted group each → back faces, interior (Cr + Cr–O bonds), front faces
+    if (S.octa) for (const o of M.octa) {
+      const cv = o.c.v, g = { kind: 'group', z: cv[2], back: [], items: [], front: [] };
+      for (const f of o.faces) {
+        const [a, b, c] = f.map(x => x.v);
+        const cen = scl(add(add(a, b), c), 1 / 3);
+        let nrm = cross(sub(b, a), sub(c, a));
+        if (dot(nrm, sub(cen, cv)) < 0) nrm = scl(nrm, -1);
+        const face = { kind: 'face', z: cen[2], pts: [a, b, c].map(v => [SX(v[0]), SY(v[1])]), fog: fogOf(cen[2]) };
+        (nrm[2] > 0 ? g.front : g.back).push(face);
+      }
+      g.back.sort(byZ); g.front.sort(byZ);
+      groups.set(o.c, g); prims.push(g);
+    }
+
+    for (const at of M.atoms) {
+      if (!S.show[at.el]) continue;
+      const p = { kind: 'atom', z: at.v[2], at, x: SX(at.v[0]), y: SY(at.v[1]), r: radius(at.el) * s, fog: fogOf(at.v[2]) };
+      (groups.has(at) ? groups.get(at).items : prims).push(p);
+    }
+
+    // bonds: drawn surface-to-surface, split into two halves for depth sorting
+    if (S.bonds) for (const b of M.bonds) {
+      if (!S.bondType[b.type] || !S.show[b.A.el] || !S.show[b.B.el]) continue;
+      const A = b.A.v, B = b.B.v, u = scl(sub(B, A), 1 / b.d);
+      const ra = Math.sqrt(Math.max(radius(b.A.el) ** 2 - BOND_R ** 2, 0));
+      const rb = Math.sqrt(Math.max(radius(b.B.el) ** 2 - BOND_R ** 2, 0));
+      if (ra + rb >= b.d - 0.02) continue;
+      const P = add(A, scl(u, ra)), Q = sub(B, scl(u, rb)), Mid = scl(add(P, Q), 0.5);
+      const target = (b.type === 'Cr-O' && groups.has(b.A)) ? groups.get(b.A).items : prims;
+      for (const [E, F] of [[P, Mid], [Mid, Q]]) {
+        const z = (E[2] + F[2]) / 2;
+        target.push({ kind: 'bond', z, x1: SX(E[0]), y1: SY(E[1]), x2: SX(F[0]), y2: SY(F[1]), w: 2 * BOND_R * s, fog: fogOf(z) });
+      }
+    }
+
+    // unit cell: edges cut where they pass through visible atoms, then split into short depth-sorted pieces
+    if (S.cell) {
+      const vis = M.atoms.filter(a => S.show[a.el]);
+      for (const [P0, P1] of M.cellEdges) {
+        const dv = sub(P1, P0), L2 = dot(dv, dv), L = Math.sqrt(L2), cuts = [];
+        for (const a of vis) {
+          const w = sub(a.p, P0), t = dot(w, dv) / L2;
+          if (t < -0.2 || t > 1.2) continue;
+          const d2 = dot(w, w) - t * t * L2, r = radius(a.el);
+          if (d2 < r * r) { const h = Math.sqrt(r * r - d2) / L; cuts.push([t - h, t + h]); }
+        }
+        cuts.sort((p, q) => p[0] - q[0]);
+        const pieces = []; let t = 0;
+        for (const [c0, c1] of cuts) { if (c0 > t) pieces.push([t, Math.min(c0, 1)]); t = Math.max(t, c1); if (t >= 1) break; }
+        if (t < 1) pieces.push([t, 1]);
+        for (const [t0, t1] of pieces) {
+          if (t1 - t0 < 1e-4) continue;
+          const nseg = Math.max(1, Math.ceil((t1 - t0) * L / 0.75));
+          for (let i = 0; i < nseg; i++) {
+            const a = V(add(P0, scl(dv, t0 + (t1 - t0) * i / nseg))), c = V(add(P0, scl(dv, t0 + (t1 - t0) * (i + 1) / nseg)));
+            const z = (a[2] + c[2]) / 2;
+            prims.push({ kind: 'seg', z, x1: SX(a[0]), y1: SY(a[1]), x2: SX(c[0]), y2: SY(c[1]), fog: fogOf(z) });
+          }
+        }
+      }
+    }
+
+    prims.sort(byZ);
+    for (const g of groups.values()) g.items.sort(byZ);
+    return { prims, R };
+  }
+
+  /* ==================================================================
+     Canvas painters
+     ================================================================== */
+  function glossEllipse(g, x, y, rx, ry, stops) {
+    g.save(); g.translate(x, y); g.rotate(-35 * D2R); g.scale(rx, ry);
+    const gr = g.createRadialGradient(0, 0, 0, 0, 0, 1);
+    for (const [o, a] of stops) gr.addColorStop(o, `rgba(255,255,255,${a})`);
+    g.fillStyle = gr; g.beginPath(); g.arc(0, 0, 1, 0, 2 * Math.PI); g.fill(); g.restore();
+  }
+  function paintSphere(g, cx, cy, r, el, fog) {
+    const E = EL[el];
+    g.beginPath(); g.arc(cx, cy, r, 0, 2 * Math.PI);
+    let gr = g.createRadialGradient(cx - 0.3 * r, cy - 0.4 * r, 0, cx, cy, r);
+    E.stops.forEach((c, i) => gr.addColorStop(STOP_AT[i], c));
+    g.fillStyle = gr; g.fill();
+    const rim = hexRGB(E.rim);
+    gr = g.createRadialGradient(cx + 0.5 * r, cy + 0.6 * r, 0, cx, cy, r);
+    gr.addColorStop(0.7, css(rim, 0)); gr.addColorStop(1, css(rim, 0.55));
+    g.fillStyle = gr; g.fill();
+    glossEllipse(g, cx - 0.30 * r, cy - 0.40 * r, 0.50 * r, 0.32 * r, GLOSS);
+    glossEllipse(g, cx - 0.38 * r, cy - 0.48 * r, 0.17 * r, 0.11 * r, SPARK);
+    if (fog > 0.002) { g.beginPath(); g.arc(cx, cy, r, 0, 2 * Math.PI); g.fillStyle = `rgba(255,255,255,${fog})`; g.fill(); }
+  }
+
+  const sprites = new Map();
+  function sprite(el, rCss, fog, ratio) {
+    const lvl = Math.round(fog / FOG_MAX * FOG_LEVELS) || 0;
+    const rDev = Math.max(0.5, rCss * ratio);
+    const key = `${el}|${rDev.toFixed(2)}|${lvl}`;
+    let sp = sprites.get(key);
+    if (!sp) {
+      if (sprites.size > 800) sprites.clear();
+      const size = Math.ceil(2 * rDev + 4), cv = document.createElement('canvas');
+      cv.width = cv.height = size;
+      paintSphere(cv.getContext('2d'), size / 2, size / 2, rDev, el, lvl / FOG_LEVELS * FOG_MAX);
+      sp = { cv, half: size / 2 / ratio };
+      sprites.set(key, sp);
+    }
+    return sp;
+  }
+
+  // fog-tinted colour strings, quantised so they can be cached
+  const tints = new Map();
+  function tint(rgb, f, a) {
+    const lvl = Math.round(clamp(f, 0, 1) * 64), key = `${rgb}|${lvl}|${a}`;
+    let s = tints.get(key);
+    if (!s) { s = css(toWhite(rgb, lvl / 64), a); tints.set(key, s); }
+    return s;
+  }
+  function bondNormal(p) {
+    let dx = p.x2 - p.x1, dy = p.y2 - p.y1; const L = Math.hypot(dx, dy);
+    if (L < 0.05) return null;
+    dx /= L; dy /= L;
+    let nx = -dy, ny = dx;
+    if (nx * LIGHT[0] + ny * LIGHT[1] < 0) { nx = -nx; ny = -ny; }     // n points towards the light
+    return { dx, dy, nx, ny, L };
+  }
+  // Bonds are stroked in a local frame (x along the bond, −y towards the light), so a single
+  // cylinder gradient per (width, fog level) serves every bond in the frame.
+  const bondGrads = new Map(); let bondGradCtx = null;
+  function bondGradient(g, w, fog) {
+    if (bondGradCtx !== g || bondGrads.size > 600) { bondGrads.clear(); bondGradCtx = g; }
+    const lvl = Math.round(clamp(fog, 0, 1) * 64), key = `${lvl}|${w.toFixed(2)}`;
+    let gr = bondGrads.get(key);
+    if (!gr) {
+      gr = g.createLinearGradient(0, -w / 2, 0, w / 2);
+      for (const [o, c] of BOND_STOPS) gr.addColorStop(o, css(toWhite(c, lvl / 64)));
+      bondGrads.set(key, gr);
+    }
+    return gr;
+  }
+  function drawBond(g, p, ratio) {
+    const q = bondNormal(p); if (!q) return;
+    // local +x = (dx, dy), local −y = (dy, −dx); flip the direction if needed so that −y faces the light
+    let x0 = p.x1, y0 = p.y1, dx = q.dx, dy = q.dy;
+    if (dy * LIGHT[0] - dx * LIGHT[1] < 0) { x0 = p.x2; y0 = p.y2; dx = -dx; dy = -dy; }
+    g.setTransform(ratio * dx, ratio * dy, -ratio * dy, ratio * dx, ratio * x0, ratio * y0);
+    g.strokeStyle = bondGradient(g, p.w, p.fog); g.lineWidth = p.w; g.lineCap = 'butt';
+    g.beginPath(); g.moveTo(-0.4, 0); g.lineTo(q.L + 0.4, 0); g.stroke();
+    g.setTransform(ratio, 0, 0, ratio, 0, 0);
+  }
+  function drawFace(g, p) {
+    g.beginPath(); g.moveTo(p.pts[0][0], p.pts[0][1]); g.lineTo(p.pts[1][0], p.pts[1][1]); g.lineTo(p.pts[2][0], p.pts[2][1]); g.closePath();
+    g.fillStyle = tint(OCTA_FILL, p.fog, OCTA_FA); g.fill();
+    g.strokeStyle = tint(OCTA_EDGE, p.fog, OCTA_EA); g.lineWidth = 0.9; g.lineJoin = 'round'; g.stroke();
+  }
+  function drawSeg(g, p) {
+    g.strokeStyle = tint(CELL_RGB, Math.min(0.85, p.fog * 1.3)); g.lineWidth = 1.1; g.lineCap = 'butt';
+    g.beginPath(); g.moveTo(p.x1, p.y1); g.lineTo(p.x2, p.y2); g.stroke();
+  }
+  function drawPrim(g, p, ratio, hits) {
+    switch (p.kind) {
+      case 'atom': { const sp = sprite(p.at.el, p.r, p.fog, ratio); g.drawImage(sp.cv, p.x - sp.half, p.y - sp.half, 2 * sp.half, 2 * sp.half); if (hits) hits.push(p); break; }
+      case 'bond': drawBond(g, p, ratio); break;
+      case 'seg': drawSeg(g, p); break;
+      case 'face': drawFace(g, p); break;
+      case 'group':
+        for (const f of p.back) drawFace(g, f);
+        for (const it of p.items) drawPrim(g, it, ratio, hits);
+        for (const f of p.front) drawFace(g, f);
+        break;
+    }
+  }
+
+  // crystal axes triad (shared by canvas and SVG output)
+  function axesItems(H, R) {
+    const L = 30, ox = 48, oy = H - 46, items = [];
+    const axes = [['a', [1, 0, 0]], ['b', [-0.5, SQ3 / 2, 0]], ['c', [0, 0, 1]]].map(([n, d]) => ({ n, v: R(d) }));
+    axes.sort((p, q) => p.v[2] - q.v[2]);
+    for (const { n, v } of axes) {
+      const pl = Math.hypot(v[0], v[1]), col = v[2] < -0.25 ? '#9c9c9c' : '#1a1a1a';
+      if (pl < 0.2) {                      // (anti)parallel to the line of sight: ⊙ / ⊗
+        items.push({ t: 'end', x: ox, y: oy, toward: v[2] > 0, col });
+        items.push({ t: 'text', x: ox + 13, y: oy - 12, s: n, col });
+        continue;
+      }
+      const ux = v[0] / pl, uy = -v[1] / pl, ex = ox + v[0] * L, ey = oy - v[1] * L;
+      const hd = Math.min(7, L * pl * 0.5), w = hd * 0.42;
+      items.push({ t: 'line', x1: ox, y1: oy, x2: ex - ux * hd * 0.7, y2: ey - uy * hd * 0.7, col });
+      items.push({ t: 'head', pts: [[ex, ey], [ex - ux * hd - uy * w, ey - uy * hd + ux * w], [ex - ux * hd + uy * w, ey - uy * hd - ux * w]], col });
+      items.push({ t: 'text', x: ex + ux * 10, y: ey + uy * 10, s: n, col });
+    }
+    items.push({ t: 'origin', x: ox, y: oy, col: '#1a1a1a' });
+    return items;
+  }
+  function drawAxes(g, H, R) {
+    g.save(); g.lineCap = 'round'; g.lineJoin = 'round';
+    g.font = `italic 16px ${SERIF}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    for (const it of axesItems(H, R)) {
+      g.strokeStyle = g.fillStyle = it.col; g.lineWidth = 1.3;
+      if (it.t === 'line') { g.beginPath(); g.moveTo(it.x1, it.y1); g.lineTo(it.x2, it.y2); g.stroke(); }
+      else if (it.t === 'head') { g.beginPath(); it.pts.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y)); g.closePath(); g.fill(); }
+      else if (it.t === 'text') g.fillText(it.s, it.x, it.y);
+      else if (it.t === 'origin') { g.beginPath(); g.arc(it.x, it.y, 1.7, 0, 2 * Math.PI); g.fill(); }
+      else if (it.t === 'end') {
+        g.beginPath(); g.arc(it.x, it.y, 5, 0, 2 * Math.PI); g.stroke();
+        if (it.toward) { g.beginPath(); g.arc(it.x, it.y, 1.6, 0, 2 * Math.PI); g.fill(); }
+        else { g.beginPath(); g.moveTo(it.x - 3.2, it.y - 3.2); g.lineTo(it.x + 3.2, it.y + 3.2); g.moveTo(it.x + 3.2, it.y - 3.2); g.lineTo(it.x - 3.2, it.y + 3.2); g.stroke(); }
+      }
+    }
+    g.restore();
+  }
+
+  /* ==================================================================
+     Main render
+     ================================================================== */
+  const $ = s => document.querySelector(s);
+  const stage = $('#stage'), canvas = $('#view'), ctx = canvas.getContext('2d');
+  let M = buildModel(S.n, S.k);
+  let dpr = 1, hits = [], hoverAtom = null, pending = false, lastMin = 0, ready = false;
+
+  function draw() {
+    pending = false;
+    const W = stage.clientWidth, H = stage.clientHeight;
+    if (!W || !H) return;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+    const { prims, R } = buildScene(W, H);
+    hits = [];
+    for (const p of prims) drawPrim(ctx, p, dpr, hits);
+    if (hoverAtom) {
+      const h = hits.find(x => x.at === hoverAtom);
+      if (h) { ctx.beginPath(); ctx.arc(h.x, h.y, h.r + 3, 0, 2 * Math.PI); ctx.strokeStyle = 'rgba(31,91,196,.9)'; ctx.lineWidth = 1.6; ctx.stroke(); }
+      else hideTip();
+    }
+    drawAxes(ctx, H, R);
+    updateReadout();
+  }
+  function request() { if (!pending) { pending = true; requestAnimationFrame(draw); } }
+
+  function fitFor(phi, theta) {
+    const W = stage.clientWidth, H = stage.clientHeight, R = rotator(phi, theta);
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    const ext = (p, r) => { const v = R(sub(p, M.center)); x0 = Math.min(x0, v[0] - r); x1 = Math.max(x1, v[0] + r); y0 = Math.min(y0, v[1] - r); y1 = Math.max(y1, v[1] + r); };
+    const vis = M.atoms.filter(a => S.show[a.el]);
+    for (const a of (vis.length ? vis : M.atoms)) ext(a.p, radius(a.el));
+    if (S.cell) for (const p of M.corners) ext(p, 0);
+    const m = clamp(0.075 * Math.min(W, H), 24, 72);
+    const scale = Math.min((W - 2 * m) / Math.max(x1 - x0, 1e-3), (H - 2 * m) / Math.max(y1 - y0, 1e-3));
+    return { phi, theta, scale: clamp(scale, 2, 400), panX: -(x0 + x1) / 2, panY: -(y0 + y1) / 2 };
+  }
+  function applyView(v) { Object.assign(S, { phi: v.phi, theta: v.theta, scale: v.scale, panX: v.panX, panY: v.panY }); request(); }
+
+  let anim = 0;
+  function stopAnim() { if (anim) cancelAnimationFrame(anim); anim = 0; }
+  function animateTo(v, ms = 520) {
+    stopAnim();
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return applyView(v);
+    const from = { phi: S.phi, theta: S.theta, scale: S.scale, panX: S.panX, panY: S.panY };
+    let dphi = v.phi - from.phi; dphi = Math.atan2(Math.sin(dphi), Math.cos(dphi));
+    const t0 = performance.now();
+    const step = now => {
+      const t = Math.min(1, (now - t0) / ms), e = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      S.phi = from.phi + dphi * e; S.theta = from.theta + (v.theta - from.theta) * e;
+      S.scale = from.scale * Math.pow(v.scale / from.scale, e);
+      S.panX = from.panX + (v.panX - from.panX) * e; S.panY = from.panY + (v.panY - from.panY) * e;
+      draw();
+      anim = t < 1 ? requestAnimationFrame(step) : 0;
+    };
+    anim = requestAnimationFrame(step);
+  }
+  const goView = key => animateTo(fitFor(VIEWS[key].phi, VIEWS[key].theta));
+
+  function zoomAt(mx, my, f) {
+    const W = stage.clientWidth, H = stage.clientHeight, s0 = S.scale, s1 = clamp(s0 * f, 2, 400);
+    const X = (mx - W / 2) / s0 - S.panX, Y = -(my - H / 2) / s0 - S.panY;
+    S.scale = s1; S.panX = (mx - W / 2) / s1 - X; S.panY = -(my - H / 2) / s1 - Y;
+    request();
+  }
+
+  const readout = $('#readout');
+  const wrapDeg = r => { let d = Math.round(r / D2R) % 360; if (d > 180) d -= 360; if (d <= -180) d += 360; return d; };
+  function updateReadout() {
+    const txt = `azimuth ${wrapDeg(S.phi)}°  ·  elevation ${Math.round(S.theta / D2R)}°`;
+    if (readout.textContent !== txt) readout.textContent = txt;
+    for (const b of document.querySelectorAll('[data-view]')) {
+      const v = VIEWS[b.dataset.view];
+      const on = Math.abs(wrapDeg(S.phi - v.phi)) < 1 && Math.abs(S.theta - v.theta) < D2R;
+      b.classList.toggle('active', on);
+    }
+  }
+
+  /* ==================================================================
+     Pointer, wheel and keyboard interaction
+     ================================================================== */
+  const ROT = 0.45 * D2R, pointers = new Map();
+  let gesture = null;
+  const local = e => { const r = canvas.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+
+  canvas.addEventListener('pointerdown', e => {
+    canvas.focus({ preventScroll: true });
+    canvas.setPointerCapture(e.pointerId);
+    pointers.set(e.pointerId, [e.clientX, e.clientY]);
+    stopAnim();
+    if (pointers.size === 1) gesture = { mode: (e.button === 1 || e.button === 2 || e.shiftKey) ? 'pan' : 'rotate', moved: 0 };
+    else if (pointers.size === 2) {
+      const [p, q] = [...pointers.values()];
+      gesture = { mode: 'pinch', dist: Math.hypot(p[0] - q[0], p[1] - q[1]), mid: [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2], moved: 99 };
+    }
+    canvas.classList.add(gesture.mode === 'pan' ? 'panning' : 'dragging');
+    hideTip();
+  });
+  canvas.addEventListener('pointermove', e => {
+    const prev = pointers.get(e.pointerId);
+    if (!prev) { if (e.pointerType === 'mouse') hoverAt(...local(e)); return; }
+    const cur = [e.clientX, e.clientY], dx = cur[0] - prev[0], dy = cur[1] - prev[1];
+    pointers.set(e.pointerId, cur);
+    if (!gesture) return;
+    if (gesture.mode === 'pinch' && pointers.size === 2) {
+      const [p, q] = [...pointers.values()];
+      const dist = Math.hypot(p[0] - q[0], p[1] - q[1]), mid = [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
+      const r = canvas.getBoundingClientRect();
+      zoomAt(mid[0] - r.left, mid[1] - r.top, dist / Math.max(gesture.dist, 1));
+      S.panX += (mid[0] - gesture.mid[0]) / S.scale; S.panY -= (mid[1] - gesture.mid[1]) / S.scale;
+      gesture.dist = dist; gesture.mid = mid;
+    } else if (gesture.mode === 'rotate') {
+      S.phi += dx * ROT;
+      S.theta = clamp(S.theta + dy * ROT, -Math.PI / 2, Math.PI / 2);
+    } else if (gesture.mode === 'pan') {
+      S.panX += dx / S.scale; S.panY -= dy / S.scale;
+    }
+    gesture.moved += Math.abs(dx) + Math.abs(dy);
+    request();
+  });
+  function endPointer(e) {
+    if (!pointers.has(e.pointerId)) return;
+    pointers.delete(e.pointerId);
+    if (e.type === 'pointerup' && gesture && gesture.moved < 4) {      // a tap / click: inspect the atom under it
+      const [x, y] = local(e), at = atomAt(x, y);
+      if (at) showTip(at, x, y); else hideTip();
+    }
+    if (pointers.size === 0) { gesture = null; canvas.classList.remove('dragging', 'panning'); }
+    else if (pointers.size === 1) gesture = { mode: 'rotate', moved: 99 };
+  }
+  canvas.addEventListener('pointerup', endPointer);
+  canvas.addEventListener('pointercancel', endPointer);
+  canvas.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse' && !pointers.size) hideTip(); });
+  canvas.addEventListener('contextmenu', e => e.preventDefault());
+  canvas.addEventListener('dblclick', () => goView('reset'));
+  canvas.addEventListener('wheel', e => {
+    e.preventDefault(); stopAnim();
+    const dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaMode === 2 ? e.deltaY * 400 : e.deltaY;
+    const [x, y] = local(e);
+    zoomAt(x, y, Math.exp(-dy * (e.ctrlKey ? 0.01 : 0.0015)));
+  }, { passive: false });
+  canvas.addEventListener('keydown', e => {
+    const step = (e.shiftKey ? 15 : 5) * D2R, W = stage.clientWidth, H = stage.clientHeight;
+    switch (e.key) {
+      case 'ArrowLeft': S.phi -= step; break;
+      case 'ArrowRight': S.phi += step; break;
+      case 'ArrowUp': S.theta = clamp(S.theta - step, -Math.PI / 2, Math.PI / 2); break;
+      case 'ArrowDown': S.theta = clamp(S.theta + step, -Math.PI / 2, Math.PI / 2); break;
+      case '+': case '=': zoomAt(W / 2, H / 2, 1.15); break;
+      case '-': case '_': zoomAt(W / 2, H / 2, 1 / 1.15); break;
+      case '0': case 'r': case 'R': goView('reset'); break;
+      default: return;
+    }
+    e.preventDefault(); stopAnim(); request();
+  });
+
+  /* ---- atom inspector ---- */
+  const tip = $('#tip');
+  function atomAt(x, y) {
+    for (let i = hits.length - 1; i >= 0; i--) { const h = hits[i]; if ((x - h.x) ** 2 + (y - h.y) ** 2 <= h.r * h.r) return h.at; }
+    return null;
+  }
+  function hoverAt(x, y) { const at = atomAt(x, y); if (at) showTip(at, x, y); else hideTip(); }
+  const fracTxt = v => {
+    v = ((v % 1) + 1) % 1; if (v > 1 - 1e-6) v = 0;
+    const k = Math.round(v * 6);
+    return Math.abs(v * 6 - k) < 1e-6 ? ['0', '1/6', '1/3', '1/2', '2/3', '5/6'][k % 6] : v.toFixed(4);
+  };
+  function tipHTML(at) {
+    const f2 = d => d.toFixed(3);
+    const env = {
+      Pd: `2 × Pd–O ${f2(DIST.PdO)} Å (linear O–Pd–O)<br>6 × Pd–Pd ${f2(DIST.MM)} Å`,
+      Cr: `6 × Cr–O ${f2(DIST.CrO)} Å<br>∠O–Cr–O ${ANG.intra.toFixed(1)}°, ${ANG.inter.toFixed(1)}°`,
+      O:  `1 × O–Pd ${f2(DIST.PdO)} Å<br>3 × O–Cr ${f2(DIST.CrO)} Å`,
+    }[at.el];
+    return `<div class="tip-h">${ballSVG(at.el, 17)}${at.el}<span>${EL[at.el].name}, ${at.site.replace(/([a-z])$/, '<i>$1</i>')}</span></div>` +
+           `<div class="tip-f">(${at.f.map(fracTxt).join(', ')})</div><div class="tip-n">${env}</div>`;
+  }
+  function showTip(at, x, y) {
+    if (at !== hoverAtom) { hoverAtom = at; tip.innerHTML = tipHTML(at); request(); }
+    tip.classList.add('on');
+    const W = stage.clientWidth, H = stage.clientHeight, tw = tip.offsetWidth, th = tip.offsetHeight;
+    let tx = x + 16, ty = y + 16;
+    if (tx + tw > W - 8) tx = x - tw - 16;
+    if (ty + th > H - 8) ty = y - th - 16;
+    tip.style.transform = `translate(${Math.round(Math.max(8, tx))}px, ${Math.round(Math.max(8, ty))}px)`;
+  }
+  function hideTip() { if (hoverAtom) { hoverAtom = null; request(); } tip.classList.remove('on'); }
+
+  /* ==================================================================
+     SVG pieces (UI icons + export), same gradients as the reference figures
+     ================================================================== */
+  function sphereDefs(pre) {
+    let s = '';
+    for (const [el, E] of Object.entries(EL)) {
+      s += `<radialGradient id="${pre}sphere_${el}" cx="0.5" cy="0.5" r="0.5" fx="0.35" fy="0.3" gradientUnits="objectBoundingBox">` +
+           E.stops.map((c, i) => `<stop offset="${STOP_AT[i]}" stop-color="${c}"/>`).join('') + '</radialGradient>' +
+           `<radialGradient id="${pre}rim_${el}" cx="0.5" cy="0.5" r="0.5" fx="0.75" fy="0.8" gradientUnits="objectBoundingBox">` +
+           `<stop offset="0.7" stop-color="${E.rim}" stop-opacity="0"/><stop offset="1" stop-color="${E.rim}" stop-opacity="0.55"/></radialGradient>`;
+    }
+    for (const [id, st] of [['gloss', GLOSS], ['spark', SPARK]])
+      s += `<radialGradient id="${pre}${id}" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox">` +
+           st.map(([o, a]) => `<stop offset="${o}" stop-color="#ffffff" stop-opacity="${a}"/>`).join('') + '</radialGradient>';
+    return s;
+  }
+  const nf = v => +v.toFixed(2);
+  function atomSVG(x, y, r, el, pre, fog, label) {
+    const gx = nf(x - 0.3 * r), gy = nf(y - 0.4 * r), kx = nf(x - 0.38 * r), ky = nf(y - 0.48 * r);
+    const c = `cx="${nf(x)}" cy="${nf(y)}" r="${nf(r)}"`;
+    return (label ? `<g inkscape:label="${label}">` : '<g>') +
+      `<circle ${c} fill="url(#${pre}sphere_${el})"/><circle ${c} fill="url(#${pre}rim_${el})"/>` +
+      `<ellipse cx="${gx}" cy="${gy}" rx="${nf(0.5 * r)}" ry="${nf(0.32 * r)}" fill="url(#${pre}gloss)" transform="rotate(-35 ${gx} ${gy})"/>` +
+      `<ellipse cx="${kx}" cy="${ky}" rx="${nf(0.17 * r)}" ry="${nf(0.11 * r)}" fill="url(#${pre}spark)" transform="rotate(-35 ${kx} ${ky})"/>` +
+      (fog > 0.002 ? `<circle ${c} fill="#ffffff" fill-opacity="${fog.toFixed(3)}"/>` : '') + '</g>';
+  }
+  function ballSVG(el, size) {
+    const c = size / 2;
+    return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true">${atomSVG(c, c, c - 1, el, 'ui-', 0)}</svg>`;
+  }
+  function bondSVG(e1, e2) {
+    return `<svg width="26" height="14" viewBox="0 0 26 14" aria-hidden="true"><rect x="5" y="5.9" width="16" height="2.2" rx="1" fill="#a3a3a3"/>` +
+           atomSVG(5.5, 7, 4.6, e1, 'ui-', 0) + atomSVG(20.5, 7, e2 === 'O' ? 3.8 : 4.6, e2, 'ui-', 0) + '</svg>';
+  }
+
+  function exportSVG() {
+    const W = Math.round(stage.clientWidth), H = Math.round(stage.clientHeight);
+    const { prims, R } = buildScene(W, H);
+    const grads = [], body = [];
+    let gid = 0;
+    const emit = p => {
+      if (p.kind === 'atom') {
+        const lab = `${p.at.el} ${p.at.site} (${p.at.f.map(fracTxt).join(', ')})`;
+        body.push(atomSVG(p.x, p.y, p.r, p.at.el, '', p.fog, lab));
+      } else if (p.kind === 'bond') {
+        const q = bondNormal(p); if (!q) return;
+        const id = 'bond' + gid++, h = p.w / 2, mx = (p.x1 + p.x2) / 2, my = (p.y1 + p.y2) / 2, e = 0.4;
+        grads.push(`<linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="${nf(mx + q.nx * h)}" y1="${nf(my + q.ny * h)}" x2="${nf(mx - q.nx * h)}" y2="${nf(my - q.ny * h)}">` +
+                   BOND_STOPS.map(([o, c]) => `<stop offset="${o}" stop-color="${hex(toWhite(c, p.fog))}"/>`).join('') + '</linearGradient>');
+        body.push(`<line x1="${nf(p.x1 - q.dx * e)}" y1="${nf(p.y1 - q.dy * e)}" x2="${nf(p.x2 + q.dx * e)}" y2="${nf(p.y2 + q.dy * e)}" stroke="url(#${id})" stroke-width="${nf(p.w)}"/>`);
+      } else if (p.kind === 'seg') {
+        body.push(`<line x1="${nf(p.x1)}" y1="${nf(p.y1)}" x2="${nf(p.x2)}" y2="${nf(p.y2)}" stroke="${hex(toWhite(CELL_RGB, Math.min(0.85, p.fog * 1.3)))}" stroke-width="1.1"/>`);
+      } else if (p.kind === 'face') {
+        body.push(`<polygon points="${p.pts.map(([x, y]) => nf(x) + ',' + nf(y)).join(' ')}" fill="${hex(toWhite(OCTA_FILL, p.fog))}" fill-opacity="${OCTA_FA}" ` +
+                  `stroke="${hex(toWhite(OCTA_EDGE, p.fog))}" stroke-opacity="${OCTA_EA}" stroke-width="0.9" stroke-linejoin="round"/>`);
+      } else if (p.kind === 'group') {
+        body.push('<g inkscape:label="CrO6 octahedron">'); p.back.forEach(emit); p.items.forEach(emit); p.front.forEach(emit); body.push('</g>');
+      }
+    };
+    prims.forEach(emit);
+    const ax = axesItems(H, R).map(it => {
+      if (it.t === 'line') return `<line x1="${nf(it.x1)}" y1="${nf(it.y1)}" x2="${nf(it.x2)}" y2="${nf(it.y2)}" stroke="${it.col}" stroke-width="1.3" stroke-linecap="round"/>`;
+      if (it.t === 'head') return `<polygon points="${it.pts.map(([x, y]) => nf(x) + ',' + nf(y)).join(' ')}" fill="${it.col}"/>`;
+      if (it.t === 'text') return `<text x="${nf(it.x)}" y="${nf(it.y)}" fill="${it.col}" font-family="CMU Serif, Latin Modern Roman, Times New Roman, serif" font-style="italic" font-size="16" text-anchor="middle" dominant-baseline="central">${it.s}</text>`;
+      if (it.t === 'origin') return `<circle cx="${nf(it.x)}" cy="${nf(it.y)}" r="1.7" fill="${it.col}"/>`;
+      return `<circle cx="${nf(it.x)}" cy="${nf(it.y)}" r="5" fill="none" stroke="${it.col}" stroke-width="1.3"/>` + (it.toward
+        ? `<circle cx="${nf(it.x)}" cy="${nf(it.y)}" r="1.6" fill="${it.col}"/>`
+        : `<path d="M${nf(it.x - 3.2)},${nf(it.y - 3.2)}L${nf(it.x + 3.2)},${nf(it.y + 3.2)}M${nf(it.x + 3.2)},${nf(it.y - 3.2)}L${nf(it.x - 3.2)},${nf(it.y + 3.2)}" stroke="${it.col}" stroke-width="1.3"/>`);
+    });
+    const svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+<defs>${sphereDefs('')}
+${grads.join('\n')}</defs>
+<rect id="background" inkscape:label="background" width="${W}" height="${H}" fill="#ffffff"/>
+<g id="structure" inkscape:label="PdCrO2 structure" inkscape:groupmode="layer">
+${body.join('\n')}
+</g>
+<g id="axes" inkscape:label="axes" inkscape:groupmode="layer">${ax.join('')}</g>
+</svg>`;
+    download('PdCrO2_structure.svg', new Blob([svg], { type: 'image/svg+xml' }));
+  }
+  function exportPNG() {
+    const W = stage.clientWidth, H = stage.clientHeight, ratio = 3;
+    const cv = document.createElement('canvas'); cv.width = Math.round(W * ratio); cv.height = Math.round(H * ratio);
+    const g = cv.getContext('2d'); g.setTransform(ratio, 0, 0, ratio, 0, 0);
+    g.fillStyle = '#fff'; g.fillRect(0, 0, W, H);
+    const { prims, R } = buildScene(W, H);
+    for (const p of prims) drawPrim(g, p, ratio, null);
+    drawAxes(g, H, R);
+    cv.toBlob(b => download('PdCrO2_structure.png', b), 'image/png');
+  }
+  function download(name, blob) {
+    const url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+
+  /* ==================================================================
+     Panel wiring
+     ================================================================== */
+  $('#uiDefs').innerHTML = sphereDefs('ui-');
+
+  for (const b of document.querySelectorAll('[data-el]')) {
+    b.insertAdjacentHTML('afterbegin', ballSVG(b.dataset.el, 20));
+    b.addEventListener('click', () => {
+      const el = b.dataset.el; S.show[el] = !S.show[el];
+      b.setAttribute('aria-pressed', String(S.show[el])); request();
+    });
+  }
+  for (const b of document.querySelectorAll('[data-bond]')) {
+    const [e1, e2] = b.dataset.bond.split('-');
+    b.insertAdjacentHTML('afterbegin', bondSVG(e1, e2));
+    b.addEventListener('click', () => {
+      const t = b.dataset.bond; S.bondType[t] = !S.bondType[t];
+      b.setAttribute('aria-pressed', String(S.bondType[t])); request();
+    });
+  }
+  $('#bonds').addEventListener('change', e => { S.bonds = e.target.checked; $('#bondChips').classList.toggle('off', !S.bonds); request(); });
+  for (const id of ['octa', 'cell', 'fog']) $('#' + id).addEventListener('change', e => { S[id] = e.target.checked; request(); });
+  $('#size').addEventListener('input', e => { S.size = +e.target.value; $('#sizeOut').textContent = S.size.toFixed(2) + '×'; request(); });
+
+  for (const st of document.querySelectorAll('.stepper')) {
+    const key = st.dataset.key, min = +st.dataset.min, max = +st.dataset.max, out = st.querySelector('output');
+    const [dec, inc] = st.querySelectorAll('button');
+    const sync = () => { out.textContent = S[key]; dec.disabled = S[key] <= min; inc.disabled = S[key] >= max; };
+    st.addEventListener('click', e => {
+      const btn = e.target.closest('button'); if (!btn) return;
+      const v = clamp(S[key] + +btn.dataset.d, min, max);
+      if (v === S[key]) return;
+      S[key] = v; sync();
+      M = buildModel(S.n, S.k); hideTip();
+      applyView(fitFor(S.phi, S.theta));
+    });
+    sync();
+  }
+  for (const b of document.querySelectorAll('[data-view]')) b.addEventListener('click', () => goView(b.dataset.view));
+  $('#exSvg').addEventListener('click', exportSVG);
+  $('#exPng').addEventListener('click', exportPNG);
+
+  const NB = ' ', bl = (name, d) => `<span style="white-space:nowrap">${name} ${d.toFixed(3)} Å</span>`;
+  $('#meta').innerHTML =
+    `<p><i>a</i>${NB}=${NB}${LAT.a.toFixed(4)}${NB}Å, <i>c</i>${NB}=${NB}${LAT.c.toFixed(3)}${NB}Å, <i>z</i><sub>O</sub>${NB}=${NB}${LAT.z.toFixed(4)}<br>` +
+    `Pd${NB}3<i>a</i>${NB}(0,0,0) · Cr${NB}3<i>b</i>${NB}(0,0,1/2) · O${NB}6<i>c</i>${NB}(0,0,<i>z</i>)<br>` +
+    `${bl('Pd–O', DIST.PdO)} · ${bl('Cr–O', DIST.CrO)} · ${bl('Pd–Pd', DIST.MM)}</p>` +
+    `<p>Paramagnetic phase (<i>T</i>${NB}&gt;${NB}<i>T</i><sub>N</sub>${NB}≈${NB}37.5${NB}K), so no ordered Cr moments are drawn. ` +
+    `Structure: Takatsu <i>et al.</i>, PRB <b>89</b>, 104408 (2014), X-ray, 300${NB}K.</p>`;
+
+  /* ==================================================================
+     Sizing
+     ================================================================== */
+  function resize() {
+    const W = stage.clientWidth, H = stage.clientHeight;
+    if (!W || !H) return;
+    dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+    const mn = Math.min(W, H);
+    if (!ready) { ready = true; applyView(fitFor(S.phi, S.theta)); }
+    else if (lastMin) S.scale *= mn / lastMin;
+    lastMin = mn;
+    draw();
+  }
+  new ResizeObserver(resize).observe(stage);
+  if (document.fonts) {
+    document.fonts.load(`italic 16px "CM Serif"`).then(request, () => {});
+    document.fonts.ready.then(request);
+  }
+})();
+</script>
+</body>
+</html>

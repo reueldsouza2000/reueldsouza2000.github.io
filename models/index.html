@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Models · Modelling PdCrO₂</title>
+<meta name="description" content="Interactive models of PdCrO2 with adjustable parameters.">
+<meta name="theme-color" content="#ffffff">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3CradialGradient id='g' cx='.5' cy='.5' r='.5' fx='.35' fy='.3'%3E%3Cstop offset='0' stop-color='%23ecd6ff'/%3E%3Cstop offset='.18' stop-color='%23b26ee8'/%3E%3Cstop offset='.65' stop-color='%236a249e'/%3E%3Cstop offset='1' stop-color='%232c0a4d'/%3E%3C/radialGradient%3E%3Ccircle cx='32' cy='32' r='30' fill='url(%23g)'/%3E%3Cellipse cx='22' cy='19' rx='10' ry='6.5' fill='%23fff' fill-opacity='.6' transform='rotate(-35 22 19)'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../site.css">
+</head>
+<body>
+<main class="wrap">
+  <a class="crumb" href="../">← Home</a>
+  <h1>Models</h1>
+  <p class="lede">Interactive models of PdCrO<sub>2</sub> with adjustable parameters. Choose one to open it.</p>
+
+  <!-- To add a model:
+       1. put its page at models/<name>/index.html, plus a 2:1 thumbnail models/<name>/thumb.webp;
+       2. copy the <a class="card"> block below and change the href, image, title, text and tags. -->
+  <div class="cards">
+    <a class="card" href="bilayer-bands/">
+      <div class="thumb"><img src="bilayer-bands/thumb.webp" alt="" width="960" height="480"></div>
+      <div class="body">
+        <h2>Bilayer √3×√3 spiral: bands and Fermi surface</h2>
+        <p>Two Cr layers with 120° spirals at Q = K and −K, coupled by interlayer hopping.
+          Folded and unfolded bands, the Fermi surface and layer-resolved S<sub>z</sub>, with sliders for
+          the hopping, the exchange Δ and the chemical potential μ.</p>
+        <div class="tags"><span>tight-binding</span><span>band unfolding</span><span>Fermi surface</span></div>
+        <span class="go">Open</span>
+      </div>
+    </a>
+  </div>
+</main>
+</body>
+</html>

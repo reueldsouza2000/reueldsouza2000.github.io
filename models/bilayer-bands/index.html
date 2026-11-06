@@ -1,0 +1,1000 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bilayer Spiral Bands</title>
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink2: #52514e; --muted: #898781;
+    --grid: #e1e0d9; --axis: #c3c2b7; --s1: #2a78d6; --s2: #eb6834; --border: rgba(11,11,11,0.10);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink2: #c3c2b7; --muted: #898781;
+      --grid: #2c2c2a; --axis: #383835; --s1: #3987e5; --s2: #d95926; --border: rgba(255,255,255,0.10);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --s1: #3987e5; --s2: #d95926; --border: rgba(255,255,255,0.10);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink);
+         font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 1200px; margin: 0 auto; padding: 20px 16px 32px; }
+  h1 { font-size: 20px; font-weight: 600; margin: 0 0 4px; }
+  .sub { color: var(--ink2); margin: 0 0 16px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: flex-end;
+              background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+              padding: 12px 16px; margin-bottom: 16px; }
+  .ctl { display: flex; flex-direction: column; gap: 4px; flex: 1 1 200px; min-width: 0; }
+  .ctl.tight { flex: 0 1 auto; }
+  .ctl label, .ctl .lbl { display: flex; justify-content: space-between; gap: 8px; color: var(--ink2); font-size: 13px; }
+  .ctl output { color: var(--ink); font-variant-numeric: tabular-nums; }
+  .ctl[hidden], select[hidden], .legend[hidden] { display: none; }
+  input[type=range] { width: 100%; accent-color: var(--s1); margin: 4px 0; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  button, select { font: inherit; font-size: 13px; color: var(--ink); background: var(--page);
+                   border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; cursor: pointer; }
+  button:hover, select:hover { border-color: var(--axis); }
+  .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .seg button { border: 0; border-radius: 0; }
+  .seg button + button { border-left: 1px solid var(--border); }
+  .seg button[aria-pressed="true"] { background: var(--s1); color: #fff; }
+  .panels { display: flex; flex-wrap: wrap; gap: 16px; }
+  .panel { position: relative; background: var(--surface); border: 1px solid var(--border);
+           border-radius: 10px; padding: 12px 12px 10px; min-width: 0; }
+  .panel.bands { flex: 1.25 1 440px; }
+  .panel.fs { flex: 1 1 380px; }
+  .panel h2 { font-size: 14px; font-weight: 600; margin: 0 0 2px; }
+  .panel .cap { color: var(--ink2); font-size: 12.5px; margin: 0 0 8px; }
+  canvas { display: block; width: 100%; touch-action: none; }
+  .tip { position: absolute; pointer-events: none; display: none; z-index: 2;
+         background: var(--surface); color: var(--ink); border: 1px solid var(--border); border-radius: 6px;
+         padding: 6px 8px; font-size: 12px; line-height: 1.4; white-space: nowrap;
+         box-shadow: 0 2px 10px rgba(0,0,0,0.14); font-variant-numeric: tabular-nums; }
+  .tip .k { color: var(--ink2); }
+  .legend { display: flex; align-items: center; gap: 8px; color: var(--ink2); font-size: 12px; margin-top: 6px; }
+  .legend .bar { flex: 0 0 160px; height: 10px; border-radius: 3px; border: 1px solid var(--border); }
+  .status { color: var(--muted); font-size: 12px; min-height: 1.4em; margin-top: 4px; }
+  .note { color: var(--ink2); font-size: 12.5px; margin: 14px 0 0; max-width: 900px; }
+</style>
+</head>
+<body>
+<main>
+  <nav style="margin: 0 0 10px; font-size: 13px;"><a href="../" style="color: var(--s1); text-decoration: none;">← All models</a></nav>
+  <h1>Bilayer √3×√3 spiral: bands and Fermi surface</h1>
+  <p class="sub">12×12 toy model, t<sub>∥</sub> = 1, a = 1. Lower layer Q = K, upper layer Q = −K with φ + π/3.
+     The spectrum does not depend on φ.</p>
+
+  <section class="controls" aria-label="Parameters">
+    <div class="ctl">
+      <label for="tperp"><span>Interlayer hopping t<sub>⊥</sub></span> <output id="tperpOut"></output></label>
+      <input id="tperp" type="range" min="0" max="1" step="0.005" value="0.05">
+    </div>
+    <div class="ctl">
+      <label for="delta"><span>Exchange Δ</span> <output id="deltaOut"></output></label>
+      <input id="delta" type="range" min="0" max="2" step="0.005" value="0.2">
+    </div>
+    <div class="ctl">
+      <label for="mu"><span>Chemical potential μ</span> <output id="muOut"></output></label>
+      <input id="mu" type="range" min="-6" max="3" step="0.001" value="0">
+    </div>
+    <div class="ctl tight">
+      <span class="lbl"><span>Filling</span> <output id="fillOut">–</output></span>
+      <div class="row">
+        <button id="half" type="button">Half filling</button>
+        <button id="reset" type="button">Reset</button>
+      </div>
+    </div>
+    <div class="ctl tight">
+      <span class="lbl">View</span>
+      <div class="seg" role="group" aria-label="View">
+        <button id="vFold" type="button" aria-pressed="true">Folded</button>
+        <button id="vUnfold" type="button" aria-pressed="false">Unfolded</button>
+      </div>
+    </div>
+    <div class="ctl unf" hidden>
+      <label for="eta"><span>Broadening η</span> <output id="etaOut"></output></label>
+      <input id="eta" type="range" min="0.005" max="0.3" step="0.005" value="0.05">
+    </div>
+    <div class="ctl tight unf" hidden>
+      <label for="scale">Colour scale (maps)</label>
+      <select id="scale">
+        <option value="lin">Linear</option>
+        <option value="log">Log (3 decades)</option>
+      </select>
+    </div>
+  </section>
+
+  <div class="panels">
+    <section class="panel bands" aria-label="Band structure">
+      <div class="row" style="justify-content: space-between;">
+        <h2>Band structure</h2>
+        <div class="row">
+          <select id="bstyle" aria-label="Unfolded band style" hidden>
+            <option value="lines">Weighted bands</option>
+            <option value="map">Spectral function A(k, E)</option>
+          </select>
+          <select id="path" aria-label="k-path">
+            <option value="mag">Magnetic BZ: Γ̃ – M̃ – K̃′ – Γ̃</option>
+            <option value="str">Structural BZ: Γ – M – K′ – Γ</option>
+          </select>
+        </div>
+      </div>
+      <p class="cap" id="bandCap"></p>
+      <canvas id="bandCanvas" height="440"></canvas>
+      <div class="tip" id="bandTip"></div>
+      <div class="legend" id="bandLegend" hidden><span class="lo">0</span><span class="bar"></span><span>1</span>
+        <span>spectral weight (a doubly degenerate band with full weight = 1)</span></div>
+    </section>
+    <section class="panel fs" aria-label="Fermi surface">
+      <div class="row" style="justify-content: space-between;">
+        <h2>Fermi surface</h2>
+        <select id="fscolor" aria-label="Fermi-surface colouring">
+          <option value="plain">Colour: plain</option>
+          <option value="szL">Colour: Sz, lower layer</option>
+          <option value="szU">Colour: Sz, upper layer</option>
+        </select>
+      </div>
+      <p class="cap" id="fsCap"></p>
+      <canvas id="fsCanvas" height="440"></canvas>
+      <div class="tip" id="fsTip"></div>
+      <div class="legend" id="fsLegend" hidden><span class="lo">0</span><span class="bar"></span><span>1</span>
+        <span>A(k, μ)</span></div>
+      <div class="legend" id="szLegend" hidden><span id="szLo">−1</span><span class="bar div"></span><span id="szHi">+1</span>
+        <span id="szLegendText"></span></div>
+      <div class="status" id="status"></div>
+    </section>
+  </div>
+
+  <p class="note"><b>Unfolding.</b> Each eigenstate ψ<sub>n</sub> of H(k) gets the weight
+    W<sub>n</sub>(k) = ⅓ Σ<sub>ℓ,s</sub> |Σ<sub>α</sub> e<sup>−ik·r<sub>α</sub></sup> c<sub>ℓαs</sub>|²
+    at structural momentum k. Layers and spins are summed incoherently. The weights of a state over k, k + K and
+    k + K′ add to 1, and weights of degenerate states are shared equally. A(k, E) = Σ<sub>n</sub> W<sub>n</sub>(k)
+    η² / ((E − E<sub>n</sub>)² + η²), shown divided by 2 so that a doubly degenerate band with full weight reads 1.</p>
+  <p class="note"><b>Layer-resolved S<sub>z</sub>.</b> Every level is doubly degenerate, so the S<sub>z</sub> of a single
+    eigenvector depends on how the pair is chosen. The page plots the basis-independent trace over the degenerate pair,
+    S<sub>z,ℓ</sub> = Tr<sub>pair</sub>[P<sub>ℓ</sub> σ<sub>z</sub>], where P<sub>ℓ</sub> projects onto layer ℓ.
+    S<sub>z,lower</sub> = −S<sub>z,upper</sub> for every pair (the total is zero), and
+    S<sub>z,ℓ</sub>(−k) = −S<sub>z,ℓ</sub>(k). In the unfolded view the map shows
+    A<sup>z</sup><sub>ℓ</sub>(k, μ) = Σ<sub>n</sub> ⅓ (|a<sub>ℓ↑</sub>|² − |a<sub>ℓ↓</sub>|²) η² / ((μ − E<sub>n</sub>)² + η²),
+    with a<sub>ℓs</sub> = Σ<sub>α</sub> e<sup>−ik·r<sub>α</sub></sup> c<sub>ℓαs</sub>: the unfolded weight split by layer and spin.</p>
+  <p class="note">Eigenvalues and eigenvectors come from Householder tridiagonalisation and implicit QL on the 24×24
+    real form of H(k). The folded Fermi surface contours a 150×150 grid over one magnetic BZ. The unfolded map
+    interpolates energies and weights from a 120×120 grid and evaluates the Lorentzian at every pixel. Filling is
+    electrons per Cr site (0–2, spin included).</p>
+</main>
+
+<script>
+"use strict";
+// ---------------- geometry (a = 1) ----------------
+const S3 = Math.sqrt(3), PI = Math.PI;
+const a1 = [1, 0], a2 = [0.5, S3 / 2];
+const c1 = [1.5, -S3 / 2], c2 = [1.5, S3 / 2];                         // magnetic lattice vectors
+const d1 = [2 * PI / 3, -2 * PI / S3], d2 = [2 * PI / 3, 2 * PI / S3]; // magnetic reciprocal vectors
+// representatives of the magnetic reciprocal lattice modulo the structural one: 0, K' = d2, K = d1 + d2
+const GC = [[0, 0], [d2[0], d2[1]], [d1[0] + d2[0], d1[1] + d2[1]]];
+// sublattice angle offsets (A, B, C); phi is added (phi drops out of the spectrum)
+const TH = [[2 * PI / 3, 0, 4 * PI / 3], [PI, -PI / 3, PI / 3]];
+const PHI = PI / 6;
+
+// ---------------- Hamiltonian ----------------
+const RE = new Float64Array(144), IM = new Float64Array(144), A24 = new Float64Array(576);
+const D24 = new Float64Array(24), E24 = new Float64Array(24);
+
+function addH(i, j, re, im) {           // add z at (i,j) and conj(z) at (j,i), i != j
+  RE[i * 12 + j] += re; IM[i * 12 + j] += im;
+  RE[j * 12 + i] += re; IM[j * 12 + i] -= im;
+}
+function buildH(kx, ky, tpar, tperp, D) {
+  RE.fill(0); IM.fill(0);
+  const x1 = kx * c1[0] + ky * c1[1], x2 = kx * c2[0] + ky * c2[1];
+  const p21 = [Math.cos(x2 - x1), Math.sin(x2 - x1)];   // e^{ik(c2-c1)}
+  const p2 = [Math.cos(x2), Math.sin(x2)];               // e^{ik c2}
+  const m1 = [Math.cos(x1), -Math.sin(x1)];              // e^{-ik c1}
+  const m2 = [Math.cos(x2), -Math.sin(x2)];              // e^{-ik c2}
+  const tAB = [1 + p21[0] + p2[0], p21[1] + p2[1]];
+  const tAC = [1 + p21[0] + m1[0], p21[1] + m1[1]];
+  const tBC = [1 + m1[0] + m2[0], m1[1] + m2[1]];
+  const W = [[[1, 0], p21, m1], [m2, [1, 0], m1], [[1, 0], [1, 0], [1, 0]]];
+  for (let l = 0; l < 2; l++) {
+    for (let s = 0; s < 2; s++) {
+      const o = 6 * l + s;
+      addH(o + 0, o + 2, -tpar * tAB[0], -tpar * tAB[1]);
+      addH(o + 0, o + 4, -tpar * tAC[0], -tpar * tAC[1]);
+      addH(o + 2, o + 4, -tpar * tBC[0], -tpar * tBC[1]);
+    }
+    for (let a = 0; a < 3; a++) {        // exchange: D (cos th sx + sin th sy)
+      const th = PHI + TH[l][a], i = 6 * l + 2 * a;
+      addH(i, i + 1, D * Math.cos(th), -D * Math.sin(th));
+    }
+  }
+  for (let a = 0; a < 3; a++) for (let b = 0; b < 3; b++) for (let s = 0; s < 2; s++)
+    addH(2 * a + s, 6 + 2 * b + s, -tperp * W[a][b][0], -tperp * W[a][b][1]);
+}
+function fillA24() {                      // real symmetric form [[Re, -Im], [Im, Re]]
+  for (let i = 0; i < 12; i++) for (let j = 0; j < 12; j++) {
+    const re = RE[i * 12 + j], im = IM[i * 12 + j];
+    A24[i * 24 + j] = re; A24[(i + 12) * 24 + j + 12] = re;
+    A24[i * 24 + j + 12] = -im; A24[(i + 12) * 24 + j] = im;
+  }
+}
+
+// ---------------- eigen-solvers (Householder + implicit QL) ----------------
+// wantVec: accumulate the transformation so that A holds the eigenvectors as columns afterwards
+function tred2(a, n, d, e, wantVec) {
+  for (let i = n - 1; i > 0; i--) {
+    const l = i - 1; let h = 0;
+    if (l > 0) {
+      let scale = 0;
+      for (let k = 0; k <= l; k++) scale += Math.abs(a[i * n + k]);
+      if (scale === 0) e[i] = a[i * n + l];
+      else {
+        for (let k = 0; k <= l; k++) { a[i * n + k] /= scale; h += a[i * n + k] * a[i * n + k]; }
+        let f = a[i * n + l];
+        let g = f >= 0 ? -Math.sqrt(h) : Math.sqrt(h);
+        e[i] = scale * g; h -= f * g; a[i * n + l] = f - g; f = 0;
+        for (let j = 0; j <= l; j++) {
+          if (wantVec) a[j * n + i] = a[i * n + j] / h;
+          g = 0;
+          for (let k = 0; k <= j; k++) g += a[j * n + k] * a[i * n + k];
+          for (let k = j + 1; k <= l; k++) g += a[k * n + j] * a[i * n + k];
+          e[j] = g / h; f += e[j] * a[i * n + j];
+        }
+        const hh = f / (h + h);
+        for (let j = 0; j <= l; j++) {
+          f = a[i * n + j]; e[j] = g = e[j] - hh * f;
+          for (let k = 0; k <= j; k++) a[j * n + k] -= f * e[k] + g * a[i * n + k];
+        }
+      }
+    } else e[i] = a[i * n + l];
+    d[i] = h;
+  }
+  d[0] = 0; e[0] = 0;
+  if (!wantVec) { for (let i = 0; i < n; i++) d[i] = a[i * n + i]; return; }
+  for (let i = 0; i < n; i++) {
+    const l = i - 1;
+    if (d[i]) {
+      for (let j = 0; j <= l; j++) {
+        let g = 0;
+        for (let k = 0; k <= l; k++) g += a[i * n + k] * a[k * n + j];
+        for (let k = 0; k <= l; k++) a[k * n + j] -= g * a[k * n + i];
+      }
+    }
+    d[i] = a[i * n + i]; a[i * n + i] = 1;
+    for (let j = 0; j <= l; j++) a[j * n + i] = a[i * n + j] = 0;
+  }
+}
+function tqli(d, e, n, z) {               // z: eigenvector matrix (or null)
+  for (let i = 1; i < n; i++) e[i - 1] = e[i];
+  e[n - 1] = 0;
+  for (let l = 0; l < n; l++) {
+    let iter = 0, m;
+    do {
+      for (m = l; m < n - 1; m++) {
+        const dd = Math.abs(d[m]) + Math.abs(d[m + 1]);
+        if (Math.abs(e[m]) <= 2.3e-16 * dd) break;
+      }
+      if (m !== l) {
+        if (iter++ === 60) break;
+        let g = (d[l + 1] - d[l]) / (2 * e[l]);
+        let r = Math.hypot(g, 1);
+        g = d[m] - d[l] + e[l] / (g + (g >= 0 ? r : -r));
+        let s = 1, c = 1, p = 0, i, early = false;
+        for (i = m - 1; i >= l; i--) {
+          const f = s * e[i], b = c * e[i];
+          e[i + 1] = r = Math.hypot(f, g);
+          if (r === 0) { d[i + 1] -= p; e[m] = 0; early = true; break; }
+          s = f / r; c = g / r; g = d[i + 1] - p; r = (d[i] - g) * s + 2 * c * b;
+          d[i + 1] = g + (p = s * r); g = c * r - b;
+          if (z) for (let k = 0; k < n; k++) {
+            const fz = z[k * n + i + 1];
+            z[k * n + i + 1] = s * z[k * n + i] + c * fz;
+            z[k * n + i] = c * z[k * n + i] - s * fz;
+          }
+        }
+        if (early) continue;
+        d[l] -= p; e[l] = g; e[m] = 0;
+      }
+    } while (m !== l);
+  }
+}
+function eigenvalues(kx, ky, tpar, tperp, D, out, offset) {
+  buildH(kx, ky, tpar, tperp, D); fillA24();
+  tred2(A24, 24, D24, E24, false); tqli(D24, E24, 24, null);
+  const v = Array.from(D24).sort((x, y) => x - y);
+  for (let n = 0; n < 12; n++) out[offset + n] = v[2 * n];
+  return out;
+}
+
+// ---------------- eigenvectors and unfolding weights ----------------
+const ORD = new Array(24);
+function diagVec(kx, ky, tperp, D) {      // eigenvectors end up as the columns of A24
+  buildH(kx, ky, 1, tperp, D); fillA24();
+  tred2(A24, 24, D24, E24, true); tqli(D24, E24, 24, A24);
+  for (let i = 0; i < 24; i++) ORD[i] = i;
+  ORD.sort((p, q) => D24[p] - D24[q]);
+}
+function bandEnergies(E) {                 // 12 complex eigenvalues from the doubled real spectrum
+  for (let n = 0; n < 12; n++) E[n] = 0.5 * (D24[ORD[2 * n]] + D24[ORD[2 * n + 1]]);
+}
+// unfolding weight of each complex band at structural momentum q (current diagonalisation).
+// Real eigenvectors [x; y] <-> complex x + i y; the two real copies of each complex state are averaged.
+// Optional Wz[l*12 + n]: the same weight split by layer l and weighted by the spin sign (unfolded Sz).
+function weightsAt(qx, qy, W, Wz) {
+  const pa = qx * a2[0] + qy * a2[1], pc = qx * a1[0] + qy * a1[1];
+  const cr = [Math.cos(pa), 1, Math.cos(pc)], ci = [-Math.sin(pa), 0, -Math.sin(pc)]; // e^{-iq.r_alpha}
+  for (let n = 0; n < 12; n++) {
+    let tot = 0;
+    const zl = [0, 0];
+    for (let t = 0; t < 2; t++) {
+      const j = ORD[2 * n + t];
+      for (let l = 0; l < 2; l++) for (let s = 0; s < 2; s++) {
+        let re = 0, im = 0;
+        for (let al = 0; al < 3; al++) {
+          const idx = 6 * l + 2 * al + s, x = A24[idx * 24 + j], y = A24[(idx + 12) * 24 + j];
+          re += cr[al] * x - ci[al] * y; im += cr[al] * y + ci[al] * x;
+        }
+        const a = re * re + im * im;
+        tot += a; zl[l] += s === 0 ? a : -a;
+      }
+    }
+    W[n] = tot / 6;
+    if (Wz) { Wz[n] = zl[0] / 6; Wz[12 + n] = zl[1] / 6; }
+  }
+}
+// S[l*12 + n] = Tr over the degenerate group of P_l sigma_z (basis independent), for the current diagonalisation
+function layerSz(E, S) {
+  for (let n = 0; n < 12; n++) for (let l = 0; l < 2; l++) {
+    let v = 0;
+    for (let t = 0; t < 2; t++) {
+      const j = ORD[2 * n + t];
+      for (let a = 0; a < 3; a++) {
+        const up = 6 * l + 2 * a, dn = up + 1;
+        v += A24[up * 24 + j] ** 2 + A24[(up + 12) * 24 + j] ** 2 - A24[dn * 24 + j] ** 2 - A24[(dn + 12) * 24 + j] ** 2;
+      }
+    }
+    S[l * 12 + n] = v / 2;
+  }
+  let s = 0;
+  while (s < 12) {
+    let e = s + 1;
+    while (e < 12 && Math.abs(E[e] - E[e - 1]) < 1e-7) e++;
+    for (let l = 0; l < 2; l++) {
+      let t = 0; for (let n = s; n < e; n++) t += S[l * 12 + n];
+      for (let n = s; n < e; n++) S[l * 12 + n] = t;
+    }
+    s = e;
+  }
+}
+function clusterAverage(E, W) {            // share weight equally within degenerate groups
+  let s = 0;
+  while (s < 12) {
+    let e = s + 1;
+    while (e < 12 && Math.abs(E[e] - E[e - 1]) < 1e-7) e++;
+    if (e - s > 1) {
+      let t = 0; for (let n = s; n < e; n++) t += W[n];
+      t /= (e - s); for (let n = s; n < e; n++) W[n] = t;
+    }
+    s = e;
+  }
+}
+// test hooks
+window.__eigAt = (kx, ky, tperp, D) => Array.from(eigenvalues(kx, ky, 1, tperp, D, new Float64Array(12), 0));
+window.__weightsAt = (kx, ky, tperp, D) => {
+  diagVec(kx, ky, tperp, D);
+  const E = new Float64Array(12), W = new Float64Array(12);
+  bandEnergies(E); weightsAt(kx, ky, W); clusterAverage(E, W);
+  return { E: Array.from(E), W: Array.from(W) };
+};
+window.__szAt = (kx, ky, tperp, D) => {
+  diagVec(kx, ky, tperp, D);
+  const E = new Float64Array(12), W = new Float64Array(12), Wz = new Float64Array(24), S = new Float64Array(24);
+  bandEnergies(E); layerSz(E, S); weightsAt(kx, ky, W, Wz);
+  clusterAverage(E, Wz.subarray(0, 12)); clusterAverage(E, Wz.subarray(12, 24));
+  return { E: Array.from(E), S: Array.from(S), Wz: Array.from(Wz) };
+};
+
+// ---------------- state ----------------
+const el = id => document.getElementById(id);
+const P = { tperp: 0.05, delta: 0.2, mu: 0, path: "mag", view: "folded", bstyle: "lines", eta: 0.05, scale: "lin",
+            fscolor: "plain" };
+const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+const PATHS = {
+  mag: { pts: [[0, 0], [2 * PI / 3, 0], [2 * PI / 3, 2 * PI / (3 * S3)], [0, 0]], labels: ["Γ̃", "M̃", "K̃′", "Γ̃"] },
+  str: { pts: [[0, 0], [0, 2 * PI / S3], [2 * PI / 3, 2 * PI / S3], [0, 0]], labels: ["Γ", "M", "K′", "Γ"] },
+};
+let band = null;    // path data: k, x, E (12/k), W (12/k), ticks
+let grid = null;    // folded eigenvalue grid over the magnetic BZ
+let ugrid = null;   // unfolded grid: E (12/pt), W (3 cosets x 12 /pt)
+let gridJob = 0, ugridJob = 0, gridTimer = null, ugridTimer = null, firstGrid = true;
+const statusMsg = { f: "", u: "" };
+function showStatus() { el("status").textContent = [statusMsg.f, statusMsg.u].filter(Boolean).join(" · "); }
+
+function computeBands() {
+  const path = PATHS[P.path], NS = 420;
+  const lens = [];
+  for (let i = 0; i < path.pts.length - 1; i++)
+    lens.push(Math.hypot(path.pts[i + 1][0] - path.pts[i][0], path.pts[i + 1][1] - path.pts[i][1]));
+  const total = lens.reduce((s, v) => s + v, 0);
+  const k = [], x = [], ticks = [0];
+  let acc = 0;
+  lens.forEach((L, i) => {
+    const n = Math.max(2, Math.round(NS * L / total));
+    for (let j = 0; j < n; j++) {
+      const t = j / n, a = path.pts[i], b = path.pts[i + 1];
+      k.push([a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1])]); x.push(acc + t * L);
+    }
+    acc += L; ticks.push(acc);
+  });
+  k.push(path.pts[path.pts.length - 1]); x.push(acc);
+  const E = new Float64Array(k.length * 12), W = new Float64Array(k.length * 12);
+  const e = new Float64Array(12), w = new Float64Array(12);
+  k.forEach((kk, i) => {
+    diagVec(kk[0], kk[1], P.tperp, P.delta);
+    bandEnergies(e); weightsAt(kk[0], kk[1], w); clusterAverage(e, w);
+    E.set(e, 12 * i); W.set(w, 12 * i);
+  });
+  band = { k, x, E, W, ticks, labels: path.labels, total };
+  bandMapCache = null;
+}
+
+function scheduleGrid(delay) { clearTimeout(gridTimer); gridTimer = setTimeout(computeGrid, delay); }
+function computeGrid() {
+  const job = ++gridJob, N = 150, E = new Float64Array(N * N * 12), S = new Float32Array(N * N * 24);
+  const t0 = performance.now(), tp = P.tperp, D = P.delta;
+  const e = new Float64Array(12), sz = new Float64Array(24);
+  statusMsg.f = "Computing folded grid…"; showStatus();
+  let i = 0;
+  function chunk() {
+    if (job !== gridJob) return;
+    const stop = Math.min(N, i + 8);
+    for (; i < stop; i++) for (let j = 0; j < N; j++) {
+      const u = i / N, v = j / N, p = i * N + j;
+      diagVec(u * d1[0] + v * d2[0], u * d1[1] + v * d2[1], tp, D);
+      bandEnergies(e); layerSz(e, sz);
+      E.set(e, p * 12); S.set(sz, p * 24);
+    }
+    if (i < N) { setTimeout(chunk, 0); return; }
+    const bmin = new Float64Array(12).fill(Infinity), bmax = new Float64Array(12).fill(-Infinity);
+    for (let p = 0; p < N * N; p++) for (let n = 0; n < 12; n++) {
+      const e = E[p * 12 + n]; if (e < bmin[n]) bmin[n] = e; if (e > bmax[n]) bmax[n] = e;
+    }
+    const sorted = Float64Array.from(E).sort();
+    const half = sorted.length / 2;
+    grid = { N, E, S, bmin, bmax, sorted, muHalf: 0.5 * (sorted[half - 1] + sorted[half]) };
+    const mu = el("mu");
+    mu.min = (bmin[0] - 0.05).toFixed(3); mu.max = (bmax[11] + 0.05).toFixed(3);
+    statusMsg.f = `Folded grid ${N}×${N}: ${(performance.now() - t0).toFixed(0)} ms`; showStatus();
+    if (firstGrid) { firstGrid = false; setMu(grid.muHalf); }
+    else setMu(Math.min(Math.max(P.mu, +mu.min), +mu.max));
+  }
+  chunk();
+}
+
+function scheduleUGrid(delay) {
+  clearTimeout(ugridTimer);
+  if (P.view !== "unfolded") return;
+  ugridTimer = setTimeout(computeUGrid, delay);
+}
+function computeUGrid() {
+  const job = ++ugridJob, N = 120;
+  const E = new Float32Array(N * N * 12), W = new Float32Array(N * N * 36), WZ = new Float32Array(N * N * 72);
+  const t0 = performance.now(), tp = P.tperp, D = P.delta;
+  const e = new Float64Array(12), w = new Float64Array(12), wz = new Float64Array(24);
+  let i = 0, sumErr = 0;
+  function chunk() {
+    if (job !== ugridJob) return;
+    const stop = Math.min(N, i + 6);
+    for (; i < stop; i++) for (let j = 0; j < N; j++) {
+      const u = i / N, v = j / N, kx = u * d1[0] + v * d2[0], ky = u * d1[1] + v * d2[1], p = i * N + j;
+      diagVec(kx, ky, tp, D); bandEnergies(e);
+      E.set(e, p * 12);
+      const tot = new Float64Array(12);
+      for (let c = 0; c < 3; c++) {
+        weightsAt(kx + GC[c][0], ky + GC[c][1], w, wz); clusterAverage(e, w);
+        clusterAverage(e, wz.subarray(0, 12)); clusterAverage(e, wz.subarray(12, 24));
+        W.set(w, (p * 3 + c) * 12); WZ.set(wz, (p * 3 + c) * 24);
+        for (let n = 0; n < 12; n++) tot[n] += w[n];
+      }
+      for (let n = 0; n < 12; n++) sumErr = Math.max(sumErr, Math.abs(tot[n] - 1));
+    }
+    statusMsg.u = `Unfolding ${Math.round(100 * i / N)}%…`; showStatus();
+    if (i < N) { setTimeout(chunk, 0); return; }
+    ugrid = { N, E, W, WZ, sumErr };
+    fsMapCache = null;
+    statusMsg.u = `Unfolded grid ${N}×${N}: ${((performance.now() - t0) / 1000).toFixed(1)} s`; showStatus();
+    drawFS();
+  }
+  chunk();
+}
+
+function filling(mu) {
+  if (!grid) return null;
+  const s = grid.sorted; let lo = 0, hi = s.length;
+  while (lo < hi) { const m = (lo + hi) >> 1; if (s[m] < mu) lo = m + 1; else hi = m; }
+  return lo / (grid.N * grid.N * 6);     // electrons per site (6 sites per magnetic cell)
+}
+
+// ---------------- colour ----------------
+function hex(h) { return [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)); }
+function isDark() { return css("--surface").toLowerCase() === "#1a1a19"; }
+let lutCache = { dark: null, lut: null };
+function LUT() {
+  const dark = isDark();
+  if (lutCache.dark === dark) return lutCache.lut;
+  const stops = (dark ? ["#1a1a19", "#104281", "#2a78d6", "#6da7ec", "#cde2fb"]
+                      : ["#fcfcfb", "#b7d3f6", "#5598e7", "#256abf", "#0d366b"]).map(hex);
+  const lut = new Uint8ClampedArray(256 * 3);
+  for (let i = 0; i < 256; i++) {
+    const t = i / 255 * (stops.length - 1), k = Math.min(stops.length - 2, Math.floor(t)), f = t - k;
+    for (let c = 0; c < 3; c++) lut[i * 3 + c] = stops[k][c] + f * (stops[k + 1][c] - stops[k][c]);
+  }
+  const grad = `linear-gradient(90deg, ${stops.map(s => `rgb(${s.join(",")})`).join(", ")})`;
+  document.querySelectorAll(".legend .bar:not(.div)").forEach(b => b.style.background = grad);
+  lutCache = { dark, lut };
+  return lut;
+}
+// diverging blue (-1) <-> grey/surface (0) <-> red (+1); "line" keeps a visible grey midpoint, "map" fades to the surface
+const DIV = {
+  light: { line: ["#184f95", "#5598e7", "#a8a7a1", "#e66767", "#a32a2a"],
+           map:  ["#184f95", "#86b6ef", "#fcfcfb", "#ef9a98", "#a32a2a"] },
+  dark:  { line: ["#9ec5f4", "#3987e5", "#6f6e69", "#e66767", "#f4b0ae"],
+           map:  ["#9ec5f4", "#256abf", "#1a1a19", "#b84a4a", "#f4b0ae"] },
+};
+let divCache = {};
+function divLUT(kind) {
+  const dark = isDark(), key = kind + dark;
+  if (divCache[key]) return divCache[key];
+  const stops = DIV[dark ? "dark" : "light"][kind].map(hex), lut = [];
+  for (let i = 0; i < 256; i++) {
+    const t = i / 255 * (stops.length - 1), k = Math.min(stops.length - 2, Math.floor(t)), f = t - k;
+    lut.push(stops[k].map((v, c) => Math.round(v + f * (stops[k + 1][c] - v))));
+  }
+  divCache[key] = lut;
+  return lut;
+}
+function divIndex(v) { return Math.round((Math.max(-1, Math.min(1, v)) + 1) / 2 * 255); }
+function setSzLegend(kind) {
+  const stops = DIV[isDark() ? "dark" : "light"][kind];
+  document.querySelector(".legend .bar.div").style.background = `linear-gradient(90deg, ${stops.join(", ")})`;
+}
+function intensity(a) {                   // a = A/2 (1 = full-weight doubly degenerate band at its peak)
+  if (P.scale === "log") return a <= 1e-3 ? 0 : Math.min(1, 1 + Math.log10(a) / 3);
+  return Math.min(1, a);
+}
+
+// ---------------- canvas helpers ----------------
+function setupCanvas(cv) {
+  const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
+  if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) {
+    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  }
+  const ctx = cv.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+  return { ctx, w, h, dpr };
+}
+const FONT = '12px system-ui, -apple-system, "Segoe UI", sans-serif';
+const FONT13 = '13px system-ui, -apple-system, "Segoe UI", sans-serif';
+
+// ---------------- band plot ----------------
+let bandGeom = null, bandMapCache = null;
+function bandMap(ctx, dpr, X, lo, hi, m, w, h) {
+  const x0 = Math.round(m.l * dpr), y0 = Math.round(m.t * dpr);
+  const pw = Math.round((w - m.l - m.r) * dpr), ph = Math.round((h - m.t - m.b) * dpr);
+  const key = [P.eta, P.scale, pw, ph, lo, hi, isDark()].join("|");
+  if (!bandMapCache || bandMapCache.key !== key) {
+    const img = ctx.createImageData(pw, ph), data = img.data, lut = LUT();
+    const xs = band.x, nk = xs.length, eta = P.eta;
+    const En = new Float64Array(12), Wn = new Float64Array(12);
+    let i = 0;
+    for (let px = 0; px < pw; px++) {
+      const xv = (px + 0.5) / pw * band.total;
+      while (i < nk - 2 && xs[i + 1] < xv) i++;
+      const f = Math.min(1, Math.max(0, (xv - xs[i]) / (xs[i + 1] - xs[i])));
+      for (let n = 0; n < 12; n++) {
+        En[n] = (1 - f) * band.E[i * 12 + n] + f * band.E[(i + 1) * 12 + n];
+        Wn[n] = (1 - f) * band.W[i * 12 + n] + f * band.W[(i + 1) * 12 + n];
+      }
+      for (let py = 0; py < ph; py++) {
+        const E = hi - (py + 0.5) / ph * (hi - lo);
+        let A = 0;
+        for (let n = 0; n < 12; n++) { const x = (E - En[n]) / eta; A += Wn[n] / (1 + x * x); }
+        const c = Math.round(intensity(A / 2) * 255) * 3, o = (py * pw + px) * 4;
+        data[o] = lut[c]; data[o + 1] = lut[c + 1]; data[o + 2] = lut[c + 2]; data[o + 3] = 255;
+      }
+    }
+    bandMapCache = { key, img };
+  }
+  ctx.putImageData(bandMapCache.img, x0, y0);
+}
+function drawBands(hover) {
+  if (!band) return;
+  const cv = el("bandCanvas"), { ctx, w, h, dpr } = setupCanvas(cv);
+  const m = { l: 48, r: 14, t: 10, b: 28 };
+  let lo = Infinity, hi = -Infinity;
+  for (const e of band.E) { if (e < lo) lo = e; if (e > hi) hi = e; }
+  const pad = 0.04 * (hi - lo); lo -= pad; hi += pad;
+  const X = x => m.l + (x / band.total) * (w - m.l - m.r);
+  const Y = e => m.t + (hi - e) / (hi - lo) * (h - m.t - m.b);
+  bandGeom = { m, X, Y, lo, hi, w, h };
+  const unf = P.view === "unfolded", map = unf && P.bstyle === "map";
+  ctx.font = FONT; ctx.lineWidth = 1;
+  if (map) bandMap(ctx, dpr, X, lo, hi, m, w, h);
+  // y ticks (+ grid when not a map)
+  const step = niceStep((hi - lo) / 6);
+  ctx.textAlign = "right"; ctx.textBaseline = "middle";
+  for (let v = Math.ceil(lo / step) * step; v <= hi; v += step) {
+    const y = Math.round(Y(v)) + 0.5;
+    if (!map) { ctx.strokeStyle = css("--grid"); ctx.beginPath(); ctx.moveTo(m.l, y); ctx.lineTo(w - m.r, y); ctx.stroke(); }
+    ctx.fillStyle = css("--muted"); ctx.fillText(fmt(v, step), m.l - 6, y);
+  }
+  // high-symmetry verticals
+  ctx.textAlign = "center"; ctx.textBaseline = "top";
+  band.ticks.forEach((t, i) => {
+    const x = Math.round(X(t)) + 0.5;
+    ctx.strokeStyle = css("--axis"); ctx.beginPath(); ctx.moveTo(x, m.t); ctx.lineTo(x, h - m.b); ctx.stroke();
+    ctx.fillStyle = css("--ink2"); ctx.font = FONT13;
+    ctx.fillText(band.labels[i], x, h - m.b + 7);
+  });
+  ctx.font = FONT;
+  ctx.save(); ctx.translate(13, (m.t + h - m.b) / 2); ctx.rotate(-PI / 2);
+  ctx.textBaseline = "middle"; ctx.fillStyle = css("--muted"); ctx.fillText("E / t∥", 0, 0); ctx.restore();
+  // bands
+  ctx.save(); ctx.beginPath(); ctx.rect(m.l, m.t, w - m.l - m.r, h - m.t - m.b); ctx.clip();
+  const nk = band.x.length;
+  if (!map) {
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = unf ? css("--grid") : css("--s1"); ctx.lineWidth = unf ? 1 : 1.6;
+    for (let n = 0; n < 12; n++) {
+      ctx.beginPath();
+      for (let i = 0; i < nk; i++) {
+        const x = X(band.x[i]), y = Y(band.E[i * 12 + n]);
+        i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      }
+      ctx.stroke();
+    }
+    if (unf) {                             // weighted overlay: opacity = unfolded weight
+      ctx.strokeStyle = css("--s1"); ctx.lineWidth = 2.2; ctx.lineCap = "round";
+      for (let n = 0; n < 12; n++) for (let i = 0; i < nk - 1; i++) {
+        const E0 = band.E[i * 12 + n], E1 = band.E[(i + 1) * 12 + n];
+        if (n > 0 && Math.abs(E0 - band.E[i * 12 + n - 1]) < 1e-6 && Math.abs(E1 - band.E[(i + 1) * 12 + n - 1]) < 1e-6) continue;
+        const wgt = 0.5 * (band.W[i * 12 + n] + band.W[(i + 1) * 12 + n]);
+        if (wgt < 0.01) continue;
+        ctx.globalAlpha = Math.min(1, wgt);
+        ctx.beginPath(); ctx.moveTo(X(band.x[i]), Y(E0)); ctx.lineTo(X(band.x[i + 1]), Y(E1)); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
+  // mu line
+  const ym = Y(P.mu);
+  ctx.strokeStyle = css("--s2"); ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]);
+  ctx.beginPath(); ctx.moveTo(m.l, ym); ctx.lineTo(w - m.r, ym); ctx.stroke(); ctx.setLineDash([]);
+  ctx.restore();
+  ctx.fillStyle = css("--ink2"); ctx.textAlign = "right"; ctx.textBaseline = "bottom";
+  ctx.fillText("μ", w - m.r - 4, ym - 3);
+  // hover
+  const tip = el("bandTip");
+  if (hover) {
+    const { i, n } = hover, x = X(band.x[i]), y = Y(band.E[i * 12 + n]);
+    ctx.strokeStyle = css("--muted"); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(Math.round(x) + 0.5, m.t); ctx.lineTo(Math.round(x) + 0.5, h - m.b); ctx.stroke();
+    ctx.fillStyle = css("--s1"); ctx.strokeStyle = css("--surface"); ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(x, y, 4.5, 0, 2 * PI); ctx.fill(); ctx.stroke();
+    const k = band.k[i], e = band.E[i * 12 + n];
+    const deg = [];
+    for (let q = 0; q < 12; q++) if (Math.abs(band.E[i * 12 + q] - e) < 1e-7) deg.push(q + 1);
+    const name = deg.length > 1 ? `bands ${deg[0]}–${deg[deg.length - 1]}` : `band ${n + 1}`;
+    tip.innerHTML = `<div><b>${name}</b>: E = ${e.toFixed(4)}</div>` +
+      `<div class="k">E − μ = ${(e - P.mu).toFixed(4)}</div>` +
+      (unf ? `<div>unfolded weight W = ${band.W[i * 12 + n].toFixed(3)}</div>` : "") +
+      `<div class="k">k = (${k[0].toFixed(3)}, ${k[1].toFixed(3)})</div>`;
+    placeTip(tip, cv, x, y);
+  } else tip.style.display = "none";
+}
+
+// ---------------- Fermi surface ----------------
+const EDGE_CASES = { 1: [[3, 0]], 2: [[0, 1]], 3: [[3, 1]], 4: [[1, 2]], 6: [[0, 2]], 7: [[3, 2]], 8: [[2, 3]],
+  9: [[0, 2]], 11: [[1, 2]], 12: [[1, 3]], 13: [[0, 1]], 14: [[0, 3]] };
+function fsSegments(mu) {
+  const { N, E, S, bmin, bmax } = grid, segs = [], vals = [];
+  const val = (i, j, n) => E[((i % N) * N + (j % N)) * 12 + n] - mu;
+  const sv = (i, j, n, l) => S[((i % N) * N + (j % N)) * 24 + l * 12 + n];
+  for (let n = 0; n < 12; n++) {
+    if (!(bmin[n] < mu && bmax[n] > mu)) continue;
+    for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) {
+      const a = val(i, j, n), b = val(i + 1, j, n), c = val(i + 1, j + 1, n), d = val(i, j + 1, n);
+      const idx = (a > 0 ? 1 : 0) | (b > 0 ? 2 : 0) | (c > 0 ? 4 : 0) | (d > 0 ? 8 : 0);
+      if (idx === 0 || idx === 15) continue;
+      const P0 = () => [i + a / (a - b), j], P1 = () => [i + 1, j + b / (b - c)],
+            P2 = () => [i + 1 - c / (c - d), j + 1], P3 = () => [i, j + 1 - d / (d - a)];
+      const pts = [P0, P1, P2, P3];
+      let pairs = EDGE_CASES[idx];
+      if (idx === 5 || idx === 10) {
+        const ctr = (a + b + c + d) > 0;
+        pairs = (idx === 5) === ctr ? [[0, 1], [2, 3]] : [[3, 0], [1, 2]];
+      }
+      for (const [p, q] of pairs) {
+        const u = pts[p](), v = pts[q]();
+        segs.push(u[0], u[1], v[0], v[1]);
+        // layer Sz at the segment midpoint, bilinear in the cell
+        const fu = 0.5 * (u[0] + v[0]) - i, fv = 0.5 * (u[1] + v[1]) - j;
+        for (let l = 0; l < 2; l++)
+          vals.push((1 - fu) * (1 - fv) * sv(i, j, n, l) + fu * (1 - fv) * sv(i + 1, j, n, l)
+                    + (1 - fu) * fv * sv(i, j + 1, n, l) + fu * fv * sv(i + 1, j + 1, n, l));
+      }
+    }
+  }
+  const out = new Float64Array(segs.length);
+  for (let s = 0; s < segs.length; s += 2) {
+    const u = segs[s] / N, v = segs[s + 1] / N;
+    out[s] = u * d1[0] + v * d2[0]; out[s + 1] = u * d1[1] + v * d2[1];
+  }
+  return { pts: out, vals: Float32Array.from(vals) };
+}
+function hexPath(ctx, r, ang0, tr) {
+  ctx.beginPath();
+  for (let i = 0; i < 6; i++) {
+    const t = ang0 + i * PI / 3, p = tr(r * Math.cos(t), r * Math.sin(t));
+    i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]);
+  }
+  ctx.closePath();
+}
+let fsCache = { mu: null, segs: null, grid: null }, fsMapCache = null;
+function fsMap(cv, ctx, dpr, cx, cy, sc, R) {
+  const Wd = cv.width, Hd = cv.height;
+  const key = [P.mu, P.eta, P.scale, P.fscolor, Wd, Hd, isDark()].join("|");
+  if (!fsMapCache || fsMapCache.key !== key) {
+    const img = ctx.createImageData(Wd, Hd), data = img.data, lut = LUT();
+    const { N, E, W, WZ } = ugrid, mu = P.mu, eta = P.eta, RX = S3 * R, cut = 40;
+    const sz = P.fscolor !== "plain", lz = P.fscolor === "szU" ? 12 : 0, dlut = divLUT("map");
+    const AZ = sz ? new Float32Array(Wd * Hd).fill(NaN) : null;   // Sz map: colour after finding max |A^z|
+    for (let py = 0; py < Hd; py++) {
+      const ky = (cy - (py + 0.5) / dpr) / sc;
+      if (Math.abs(ky) > RX / 2) continue;
+      for (let px = 0; px < Wd; px++) {
+        const kx = ((px + 0.5) / dpr - cx) / sc;
+        if (Math.abs(S3 * kx + ky) > RX || Math.abs(S3 * kx - ky) > RX) continue;
+        const s1 = 3 * kx / (2 * PI), s2 = S3 * ky / (2 * PI);
+        const U = 0.5 * (s1 - s2), V = 0.5 * (s1 + s2);          // k = U d1 + V d2
+        const iU = Math.floor(U), iV = Math.floor(V), c = (((iU + iV) % 3) + 3) % 3;
+        const gu = (U - iU) * N, gv = (V - iV) * N;
+        const i0 = Math.min(N - 1, Math.floor(gu)), j0 = Math.min(N - 1, Math.floor(gv));
+        const fu = gu - i0, fv = gv - j0;
+        const wi = i0 + 1 === N ? 1 : 0, wj = j0 + 1 === N ? 1 : 0;
+        const i1 = wi ? 0 : i0 + 1, j1 = wj ? 0 : j0 + 1;
+        const p00 = i0 * N + j0, p10 = i1 * N + j0, p01 = i0 * N + j1, p11 = i1 * N + j1;
+        // crossing a magnetic-cell boundary moves to the next coset of structural momenta
+        const q00 = (p00 * 3 + c) * 12, q10 = (p10 * 3 + (c + wi) % 3) * 12,
+              q01 = (p01 * 3 + (c + wj) % 3) * 12, q11 = (p11 * 3 + (c + wi + wj) % 3) * 12;
+        const w00 = (1 - fu) * (1 - fv), w10 = fu * (1 - fv), w01 = (1 - fu) * fv, w11 = fu * fv;
+        let A = 0;
+        for (let n = 0; n < 12; n++) {
+          const e = w00 * E[p00 * 12 + n] + w10 * E[p10 * 12 + n] + w01 * E[p01 * 12 + n] + w11 * E[p11 * 12 + n];
+          const x = (mu - e) / eta;
+          if (x > cut || x < -cut) continue;
+          const wt = sz
+            ? w00 * WZ[2 * q00 + lz + n] + w10 * WZ[2 * q10 + lz + n] + w01 * WZ[2 * q01 + lz + n] + w11 * WZ[2 * q11 + lz + n]
+            : w00 * W[q00 + n] + w10 * W[q10 + n] + w01 * W[q01 + n] + w11 * W[q11 + n];
+          A += wt / (1 + x * x);
+        }
+        if (sz) { AZ[py * Wd + px] = A; continue; }
+        const o = (py * Wd + px) * 4, col = Math.round(intensity(A / 2) * 255) * 3;
+        data[o] = lut[col]; data[o + 1] = lut[col + 1]; data[o + 2] = lut[col + 2]; data[o + 3] = 255;
+      }
+    }
+    let zmax = null;
+    if (sz) {                              // A^z_l on a symmetric diverging scale, +-max |A^z|
+      zmax = 0;
+      for (const v of AZ) if (v === v && Math.abs(v) > zmax) zmax = Math.abs(v);
+      const s = zmax > 0 ? 1 / zmax : 0;
+      for (let p = 0; p < AZ.length; p++) {
+        const v = AZ[p]; if (v !== v) continue;
+        const col = dlut[divIndex(v * s)], o = p * 4;
+        data[o] = col[0]; data[o + 1] = col[1]; data[o + 2] = col[2]; data[o + 3] = 255;
+      }
+    }
+    fsMapCache = { key, img, zmax };
+  }
+  ctx.putImageData(fsMapCache.img, 0, 0);
+  if (fsMapCache.zmax !== null) {
+    el("szLo").textContent = "−" + fsMapCache.zmax.toFixed(3); el("szHi").textContent = "+" + fsMapCache.zmax.toFixed(3);
+  }
+}
+function drawFS(hover) {
+  const cv = el("fsCanvas"), { ctx, w, h, dpr } = setupCanvas(cv);
+  const R = 4 * PI / 3, ext = R * 1.08, sc = Math.min(w, h) / (2 * ext), cx = w / 2, cy = h / 2;
+  const tr = (kx, ky) => [cx + kx * sc, cy - ky * sc];
+  const unf = P.view === "unfolded";
+  ctx.font = FONT;
+  if (unf && ugrid) fsMap(cv, ctx, dpr, cx, cy, sc, R);
+  if (!unf && grid) {
+    if (fsCache.mu !== P.mu || fsCache.grid !== grid) fsCache = { mu: P.mu, grid, segs: fsSegments(P.mu) };
+    const segs = fsCache.segs.pts, vals = fsCache.segs.vals, nseg = segs.length / 4;
+    const sz = P.fscolor !== "plain", l = P.fscolor === "szU" ? 1 : 0;
+    // group segments by colour: one bin for plain, 41 bins over [-1, 1] for Sz
+    const NB = sz ? 41 : 1, bins = Array.from({ length: NB }, () => []);
+    for (let s = 0; s < nseg; s++) bins[sz ? Math.round((Math.max(-1, Math.min(1, vals[2 * s + l])) + 1) / 2 * (NB - 1)) : 0].push(s);
+    const dl = divLUT("line");
+    ctx.save(); hexPath(ctx, R, 0, tr); ctx.clip();
+    ctx.lineWidth = sz ? 2.2 : 1.8; ctx.lineCap = "round";
+    bins.forEach((list, b) => {
+      if (!list.length) return;
+      if (sz) { const c = dl[Math.round(b / (NB - 1) * 255)]; ctx.strokeStyle = `rgb(${c[0]},${c[1]},${c[2]})`; }
+      else ctx.strokeStyle = css("--s1");
+      ctx.beginPath();
+      for (let m = -2; m <= 1; m++) for (let n = -2; n <= 1; n++) {
+        const gx = m * d1[0] + n * d2[0], gy = m * d1[1] + n * d2[1];
+        for (const s of list) {
+          const p = tr(segs[4 * s] + gx, segs[4 * s + 1] + gy), q = tr(segs[4 * s + 2] + gx, segs[4 * s + 3] + gy);
+          ctx.moveTo(p[0], p[1]); ctx.lineTo(q[0], q[1]);
+        }
+      }
+      ctx.stroke();
+    });
+    ctx.restore();
+    if (!segs.length) {
+      ctx.fillStyle = css("--muted"); ctx.textAlign = "center";
+      ctx.fillText("μ lies in a gap: no Fermi surface", cx, cy + R * sc * 0.55);
+    }
+  }
+  if (unf && !ugrid) {
+    ctx.fillStyle = css("--muted"); ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText("Computing unfolded weights…", cx, cy + R * sc * 0.55);
+  }
+  // BZ outlines and path
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = css("--axis"); hexPath(ctx, R, 0, tr); ctx.stroke();
+  ctx.strokeStyle = css("--muted"); ctx.setLineDash([2, 3]); hexPath(ctx, R / S3, PI / 6, tr); ctx.stroke();
+  const path = PATHS[P.path];
+  ctx.setLineDash([4, 4]); ctx.beginPath();
+  path.pts.forEach((p, i) => { const q = tr(p[0], p[1]); i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); });
+  ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = css("--ink2"); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.font = FONT13;
+  path.pts.slice(0, 3).forEach((p, i) => {
+    const q = tr(p[0], p[1]), off = i === 0 ? [-12, 10] : (i === 1 ? (P.path === "mag" ? [12, 10] : [0, -10]) : [10, -10]);
+    ctx.fillText(path.labels[i], q[0] + off[0], q[1] + off[1]);
+  });
+  ctx.font = FONT;
+  // hover
+  const tip = el("fsTip");
+  if (hover) {
+    const kx = (hover.x - cx) / sc, ky = (cy - hover.y) / sc;
+    const E = new Float64Array(12), Wt = new Float64Array(12), Sz = new Float64Array(24);
+    diagVec(kx, ky, P.tperp, P.delta); bandEnergies(E); layerSz(E, Sz); weightsAt(kx, ky, Wt); clusterAverage(E, Wt);
+    let best = 0; for (let n = 1; n < 12; n++) if (Math.abs(E[n] - P.mu) < Math.abs(E[best] - P.mu)) best = n;
+    ctx.strokeStyle = css("--muted"); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(hover.x, hover.y, 4, 0, 2 * PI); ctx.stroke();
+    tip.innerHTML = `<div class="k">k = (${kx.toFixed(3)}, ${ky.toFixed(3)})</div>` +
+      `<div>band ${best + 1} closest to μ: E − μ = ${(E[best] - P.mu).toFixed(4)}</div>` +
+      `<div>S<sub>z</sub> lower = ${Sz[best].toFixed(3)}, upper = ${Sz[12 + best].toFixed(3)}</div>` +
+      `<div>unfolded weight W = ${Wt[best].toFixed(3)}</div>`;
+    placeTip(tip, cv, hover.x, hover.y);
+  } else tip.style.display = "none";
+}
+
+// ---------------- UI ----------------
+function placeTip(tip, cv, x, y) {
+  tip.style.display = "block";
+  const panel = cv.parentElement, ox = cv.offsetLeft, oy = cv.offsetTop;
+  let left = ox + x + 14, top = oy + y - tip.offsetHeight - 10;
+  if (left + tip.offsetWidth > panel.clientWidth - 4) left = ox + x - tip.offsetWidth - 14;
+  if (top < 4) top = oy + y + 14;
+  tip.style.left = left + "px"; tip.style.top = top + "px";
+}
+function niceStep(raw) {
+  const p = Math.pow(10, Math.floor(Math.log10(raw))), r = raw / p;
+  return (r < 1.5 ? 1 : r < 3.5 ? 2 : r < 7.5 ? 5 : 10) * p;
+}
+function fmt(v, step) { const d = Math.max(0, -Math.floor(Math.log10(step) + 1e-9)); return (Math.abs(v) < step / 1e6 ? 0 : v).toFixed(d); }
+
+function captions() {
+  const unf = P.view === "unfolded";
+  el("bandCap").textContent = !unf
+    ? "All 12 bands of H(k); every band is doubly degenerate, so 6 curves show. Dashed line: μ."
+    : P.bstyle === "lines"
+      ? "Unfolded: band opacity = weight W at this structural k; faint lines are the folded bands. Dashed line: μ."
+      : "Unfolded spectral function A(k, E) with Lorentzian broadening η. Dashed line: μ.";
+  const sz = P.fscolor !== "plain", layer = P.fscolor === "szU" ? "upper" : "lower";
+  el("fsCap").textContent = !unf
+    ? (sz ? `Contours Eₙ(k) = μ coloured by Sz of the ${layer} layer, traced over each degenerate pair. `
+          : "Contours Eₙ(k) = μ in the structural BZ. ")
+      + "Solid hexagon: structural BZ; dotted: magnetic BZ; dashed: band path."
+    : sz ? `Unfolded, layer- and spin-resolved weight Aᶻ(k, μ) for the ${layer} layer: red = spin up, blue = spin down.`
+         : "Unfolded spectral weight A(k, μ) in the structural BZ. Folded copies (ghosts) are faint where the spiral mixes little.";
+  document.querySelectorAll(".legend .lo").forEach(s => s.textContent = P.scale === "log" ? "10⁻³" : "0");
+  el("bandLegend").hidden = !(unf && P.bstyle === "map");
+  el("fsLegend").hidden = !unf || sz;
+  el("szLegend").hidden = !sz;
+  if (sz) {
+    setSzLegend(unf ? "map" : "line");
+    el("szLegendText").textContent = unf ? `Aᶻ(k, μ), ${layer} layer (linear, scaled to its maximum)` : `Sz, ${layer} layer`;
+    if (!unf) { el("szLo").textContent = "−1"; el("szHi").textContent = "+1"; }
+  }
+}
+let rafPending = false;
+function redraw() {
+  if (rafPending) return;
+  rafPending = true;
+  requestAnimationFrame(() => { rafPending = false; drawBands(); drawFS(); });
+}
+function setMu(v) {
+  P.mu = v; el("mu").value = v; el("muOut").textContent = v.toFixed(3);
+  const n = filling(v);
+  el("fillOut").textContent = n === null ? "–" : `n = ${n.toFixed(3)} e/site`;
+  redraw();
+}
+function onParams() {
+  P.tperp = +el("tperp").value; P.delta = +el("delta").value;
+  el("tperpOut").textContent = P.tperp.toFixed(3); el("deltaOut").textContent = P.delta.toFixed(3);
+  computeBands(); drawBands();
+  grid = null; ugrid = null; fsMapCache = null; drawFS();
+  scheduleGrid(150); scheduleUGrid(250);
+}
+function setView(v) {
+  P.view = v;
+  el("vFold").setAttribute("aria-pressed", v === "folded");
+  el("vUnfold").setAttribute("aria-pressed", v === "unfolded");
+  document.querySelectorAll(".unf").forEach(n => n.hidden = v !== "unfolded");
+  el("bstyle").hidden = v !== "unfolded";
+  if (v === "unfolded" && P.path === "mag") { P.path = "str"; el("path").value = "str"; computeBands(); }
+  if (v === "unfolded" && !ugrid) scheduleUGrid(0);
+  LUT(); captions(); sizeCanvases();
+}
+el("tperp").addEventListener("input", onParams);
+el("delta").addEventListener("input", onParams);
+el("mu").addEventListener("input", e => setMu(+e.target.value));
+el("eta").addEventListener("input", e => { P.eta = +e.target.value; el("etaOut").textContent = P.eta.toFixed(3); redraw(); });
+el("scale").addEventListener("change", e => { P.scale = e.target.value; captions(); redraw(); });
+el("bstyle").addEventListener("change", e => { P.bstyle = e.target.value; captions(); redraw(); });
+el("fscolor").addEventListener("change", e => { P.fscolor = e.target.value; captions(); redraw(); });
+el("half").addEventListener("click", () => grid && setMu(grid.muHalf));
+el("reset").addEventListener("click", () => {
+  el("tperp").value = 0.05; el("delta").value = 0.2; el("eta").value = 0.05; P.eta = 0.05;
+  el("etaOut").textContent = "0.050"; firstGrid = true; onParams();
+});
+el("path").addEventListener("change", e => { P.path = e.target.value; computeBands(); redraw(); });
+el("vFold").addEventListener("click", () => setView("folded"));
+el("vUnfold").addEventListener("click", () => setView("unfolded"));
+
+el("bandCanvas").addEventListener("pointermove", ev => {
+  if (!band || !bandGeom) return;
+  const r = ev.currentTarget.getBoundingClientRect(), px = ev.clientX - r.left, py = ev.clientY - r.top;
+  const { m, X, Y, w, h } = bandGeom;
+  if (px < m.l || px > w - m.r || py < m.t || py > h - m.b) { drawBands(); return; }
+  let i = 0, bd = Infinity;
+  band.x.forEach((x, j) => { const d = Math.abs(X(x) - px); if (d < bd) { bd = d; i = j; } });
+  let n = 0, be = Infinity;
+  for (let q = 0; q < 12; q++) { const d = Math.abs(Y(band.E[i * 12 + q]) - py); if (d < be) { be = d; n = q; } }
+  drawBands({ i, n });
+});
+el("bandCanvas").addEventListener("pointerleave", () => drawBands());
+el("fsCanvas").addEventListener("pointermove", ev => {
+  const r = ev.currentTarget.getBoundingClientRect();
+  drawFS({ x: ev.clientX - r.left, y: ev.clientY - r.top });
+});
+el("fsCanvas").addEventListener("pointerleave", () => drawFS());
+
+function sizeCanvases() {
+  el("bandCanvas").style.height = "440px";
+  const fs = el("fsCanvas"); fs.style.height = Math.min(440, fs.clientWidth) + "px";
+  drawBands(); drawFS();
+}
+window.addEventListener("resize", sizeCanvases);
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { LUT(); captions(); redraw(); });
+
+el("etaOut").textContent = P.eta.toFixed(3);
+captions();
+onParams();
+sizeCanvases();
+</script>
+</body>
+</html>

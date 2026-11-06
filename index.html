@@ -174,7 +174,7 @@
 
     <section>
       <h2>Display</h2>
-      <label class="opt"><span>CrO<sub>6</sub> octahedra</span><input type="checkbox" class="switch" id="octa"></label>
+      <label class="opt"><span>CrO<sub>6</sub> octahedra</span><input type="checkbox" class="switch" id="octa" checked></label>
       <label class="opt"><span>Unit cell</span><input type="checkbox" class="switch" id="cell" checked></label>
       <label class="opt"><span>Depth cue</span><input type="checkbox" class="switch" id="fog" checked></label>
       <label class="range"><span>Atom size</span><input type="range" id="size" min="0.5" max="2" step="0.05" value="1"><output id="sizeOut">1.00×</output></label>
@@ -291,7 +291,7 @@
   const S = {
     show: { Pd: true, Cr: true, O: true },
     bonds: true, bondType: { 'Pd-O': true, 'Cr-O': true, 'Pd-Pd': false },
-    octa: false, cell: true, fog: true, size: 1,
+    octa: true, cell: true, fog: true, size: 1,
     n: 3, k: 3,
     phi: VIEWS.reset.phi, theta: VIEWS.reset.theta,
     scale: 30, panX: 0, panY: 0,

@@ -10,56 +10,35 @@
   @font-face { font-family: "CM Serif"; font-style: normal; font-weight: 400; font-display: swap;
     src: local("CMU Serif Roman"), local("CMUSerif-Roman"), local("LM Roman 10 Regular"), local("LMRoman10-Regular"),
          url("https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Main-Regular.woff2") format("woff2"); }
-  :root { color-scheme: light; --ink: #1a1a1a; --ink-2: #444; --muted: #767676; --line-2: #d5d5d5;
-          --accent: #1f5bc4; --bad: #b42318; }
+  :root { color-scheme: light; --ink: #1a1a1a; --line-2: #d5d5d5; --accent: #1f5bc4; --bad: #b42318; }
   * { box-sizing: border-box; }
   html, body { margin: 0; background: #fff; color: var(--ink); }
   body { font-family: "CM Serif", "CMU Serif", "Latin Modern Roman", Georgia, "Times New Roman", serif;
          -webkit-font-smoothing: antialiased; }
   .lock { min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: 24px 16px; }
   .lock[hidden] { display: none; }
-  .card { width: 100%; max-width: 340px; text-align: center; }
-  .card svg { width: 54px; height: 54px; display: block; margin: 0 auto; }
-  .label { margin: 18px 0 6px; font-size: 12px; letter-spacing: .15em; text-transform: uppercase; color: var(--muted); }
-  h1 { margin: 0; font-weight: 400; font-size: 30px; line-height: 1.15; }
-  .hint { margin: 8px 0 22px; color: var(--ink-2); font-size: 16px; }
-  form { display: grid; gap: 12px; text-align: left; }
-  #pw { width: 100%; font: inherit; font-size: 17px; padding: 10px 12px; color: var(--ink); background: #fff;
+  form { display: flex; gap: 8px; width: 100%; max-width: 320px; }
+  #pw { flex: 1; min-width: 0; font: inherit; font-size: 17px; padding: 10px 12px; color: var(--ink); background: #fff;
         border: 1px solid var(--line-2); border-radius: 8px; }
   #pw:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
-  .remember { display: flex; align-items: center; gap: 8px; color: var(--ink-2); font-size: 15px; cursor: pointer; }
-  .remember input { width: 16px; height: 16px; margin: 0; accent-color: var(--accent); }
-  button { font: inherit; font-size: 17px; padding: 10px 14px; color: #fff; background: var(--accent);
+  #pw.bad { border-color: var(--bad); outline-color: var(--bad); animation: shake .3s; }
+  @keyframes shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+  button { font: inherit; font-size: 17px; padding: 10px 18px; color: #fff; background: var(--accent);
            border: 0; border-radius: 8px; cursor: pointer; }
   button:hover { background: #1a4fae; }
   button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   button:disabled { opacity: .7; cursor: progress; }
-  .msg { min-height: 1.4em; margin: 0; color: var(--bad); font-size: 15px; text-align: center; }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  @media (prefers-reduced-motion: reduce) { #pw.bad { animation: none; } }
 </style>
 </head>
 <body>
 <main class="lock" id="lock" hidden>
-  <div class="card">
-    <svg viewBox="0 0 64 64" aria-hidden="true">
-      <radialGradient id="lockBall" cx=".5" cy=".5" r=".5" fx=".35" fy=".3">
-        <stop offset="0" stop-color="#ecd6ff"/><stop offset=".18" stop-color="#b26ee8"/>
-        <stop offset=".65" stop-color="#6a249e"/><stop offset="1" stop-color="#2c0a4d"/>
-      </radialGradient>
-      <circle cx="32" cy="32" r="30" fill="url(#lockBall)"/>
-      <ellipse cx="22" cy="19" rx="10" ry="6.5" fill="#fff" fill-opacity=".6" transform="rotate(-35 22 19)"/>
-    </svg>
-    <p class="label">BTEC MARIO</p>
-    <h1>Password required</h1>
-    <p class="hint">Enter the password to open this page.</p>
-    <form id="unlock">
-      <label class="sr" for="pw">Password</label>
-      <input id="pw" type="password" autocomplete="current-password" placeholder="Password" required>
-      <label class="remember"><input id="remember" type="checkbox" checked> Remember me on this device</label>
-      <button id="go" type="submit">Unlock</button>
-      <p class="msg" id="msg" role="alert"></p>
-    </form>
-  </div>
+  <form id="unlock">
+    <input id="pw" type="password" autocomplete="current-password" aria-label="Password" required>
+    <button id="go" type="submit">Enter</button>
+  </form>
+  <p class="sr" id="msg" role="alert"></p>
 </main>
 <noscript><p style="margin-top: 40vh; text-align: center;">This page needs JavaScript to unlock.</p></noscript>
 <script>
@@ -67,7 +46,7 @@
 // After unlocking, the key (not the password) is kept in this browser so other pages open directly.
 (() => {
   "use strict";
-  const C = { salt: "M8oae8IvI4NMhlz2IvRtIQ==", iv: "8a0gNEesqvHDUK6F", iter: 600000, data: "HzmYeXna3jycUVc3F4N7E1zxw0k5bmgqoOB1TsxnNxlA5BzUjY0wYVh8LwAtztbwXhvKnol5UsEv06qsU4lS9kCiFEsZodj2IHWg/2xvTe5h/Jh2yQlkjbY68vr7ghQyDMsEJ+nAX3QoIPR1GbHWoWkpn8fGvS4ibQA+NJhtycDnrGB28njTuYcZJ3XWn/k4SekllcvCPcgD0asqHO4p3SgE5+TF97+kAbdUnQ4zUR7b83NuqOV8rs8I+Ydeed9x87CM8JuJn0OtIiZIEIMTS+alX9TfuDUwfPVK4qHhcHMikGjIPqNLrYmTZFM9jj4bAEW1QUB732pSHkDYl46+BhP8upE15xqvck8k/bL1zuHVbk7VQKGEUxi7HEiAkFCzYbBJhCnxf20z14+9SMXKeW5Mej6zjnfgdED/R/g8lLZGRVbJu0exzAUuJGm1doMeF6znBtRPxOxtqyPjmfjqv9KSklAWjFo6UFOX8Is2KrFFcJ0aGr2JjX4JIUXHrfciCNozk3TIfHnQETU+XDqoANWd5Vo6mWLdbTiGkt2n/bhL2dIGi7ClDn00LdHFFSkhttStcsFmOmDpz07poM/IWHjZk9sJwPLgPz908VVsHFQS1aFcnNkjGP7M99H89snNkbdRnRc=" };
+  const C = { salt: "M8oae8IvI4NMhlz2IvRtIQ==", iv: "eLUbOp7QGWM/J/xi", iter: 600000, data: "otdeBBa7nroP/rxBtDyT6Yh19rTM/1OLgACTyb9xTym2YacGsRb9ATuBSgAOqwMdAEDGxTZVHs9QeWZhq7dCGu4fLnqM7gn0mQ+tfwSBQpOSOK425SCwP9NzHdSQimwjseltd2fMcUCLRGEhO1ZJp9Q7dHGvR/7In9r7y5s44uYaeCTJX3LLnHFoi6eueCs2OnECOrnZ9KTuLTMQCv6dC2UCibkMcyC0ZZ0MzQEIc/e7uAEpomOpBMi69HOW4zWaNvb0q1HKiKWhi7XSk4eZ6JIDrOvhLVCHFRgrwMzKFGg2TVtqxytDETiGVRFH2BgMi/NEwbA9IaImmcsgtsGLUM0bGqJdI+96WKrqY5VPgdfHdFh9Bj2qqu4lrLEdafrU9xZy1VOc1zs+h/yT4YqE+uTPaGPK47EQqZjf2U5JGhhwo5aaVtGnx/cB6kh8W6PIRxBGme5VnQ1PpJ8iIeHjB2BjZWFeqBwkW2NoJdeZpqAXX66y3mgOHFNT8L0j7AqZHHlVc/AOtbsjJ3/fikefUv/FbT/VXvsCrJXLArTq7qtr/26spU8pAD+Ri/B9Z77oS/iaN4RZSFks5yNCxXtf4MW5J9yrbD+1CCrFH0VFQgqqOsWEj2fmwAqrTiAGZO2DbdybXCg=" };
   const NAME = "site-unlock-key";
   const $ = id => document.getElementById(id);
   const bytes = s => Uint8Array.from(atob(s), ch => ch.charCodeAt(0));
@@ -108,43 +87,41 @@
     return null;
   }
   function forget() { for (const s of stores()) { try { s.removeItem(NAME); } catch (e) {} } }
-  function save(raw, persist) {
+  function save(raw) {
     forget();
-    try { (persist ? localStorage : sessionStorage).setItem(NAME, C.salt + ":" + raw); } catch (e) {}
+    try { localStorage.setItem(NAME, C.salt + ":" + raw); } catch (e) {}
   }
-  function showForm(note) {
+  function showForm() {
     $("lock").hidden = false;
-    if (note) $("msg").textContent = note;
     $("pw").focus();
   }
 
+  $("pw").addEventListener("input", () => { $("pw").classList.remove("bad"); $("pw").removeAttribute("aria-invalid"); });
   $("unlock").addEventListener("submit", async ev => {
     ev.preventDefault();
-    const go = $("go"), msg = $("msg");
-    go.disabled = true; go.textContent = "Unlocking…"; msg.textContent = "";
+    const go = $("go"), pw = $("pw");
+    go.disabled = true; $("msg").textContent = "";
     let html = null, raw = null;
     try {
-      const base = await crypto.subtle.importKey("raw", new TextEncoder().encode($("pw").value), "PBKDF2", false, ["deriveKey"]);
+      const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pw.value), "PBKDF2", false, ["deriveKey"]);
       const key = await crypto.subtle.deriveKey(
         { name: "PBKDF2", salt: bytes(C.salt), iterations: C.iter, hash: "SHA-256" },
         base, { name: "AES-GCM", length: 256 }, true, ["decrypt"]);
       html = await decrypt(key);
       raw = toB64(await crypto.subtle.exportKey("raw", key));
     } catch (e) { html = null; }
-    if (html === null) {
-      msg.textContent = "Wrong password. Please try again.";
-      go.disabled = false; go.textContent = "Unlock"; $("pw").select();
+    if (html === null) {             // wrong password: red box and a short shake, no visible text
+      pw.classList.remove("bad"); void pw.offsetWidth; pw.classList.add("bad");
+      pw.setAttribute("aria-invalid", "true");
+      $("msg").textContent = "Wrong password";
+      go.disabled = false; pw.select();
       return;
     }
-    save(raw, $("remember").checked);
+    save(raw);
     await show(html);
   });
 
-  if (!(window.crypto && crypto.subtle)) {
-    showForm("This browser can't unlock the page. Please use an up-to-date browser.");
-    $("go").disabled = true;
-    return;
-  }
+  if (!(window.crypto && crypto.subtle)) { showForm(); $("go").disabled = true; return; }
   (async () => {
     const raw = savedKey();
     if (raw) {
